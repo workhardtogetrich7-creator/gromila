@@ -1,5 +1,5 @@
 /* Service worker: офлайн-режим (кэш приложения) */
-const CACHE = 'gromila-v6';
+const CACHE = 'gromila-v7';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'css/app.css', 'css/fonts.css',
   'fonts/manrope-cyrillic.woff2', 'fonts/manrope-latin.woff2', 'fonts/oswald-cyrillic.woff2', 'fonts/oswald-latin.woff2',
   'js/data/exercises.js', 'js/data/program.js', 'js/figure.js', 'js/db.js', 'js/music.js', 'js/app.js',

@@ -22,7 +22,8 @@
     trash: '<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>', plus: '<path d="M12 5v14M5 12h14"/>',
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>', chev: '<path d="m9 6 6 6-6 6"/>',
     flame: '<path d="M12 22c4 0 7-3 7-7 0-3-2-5-3-7-1 2-2 3-3 3 0-4-2-7-4-9 0 4-4 6-4 12 0 4 3 8 7 8z"/>',
-    back: '<path d="m15 18-6-6 6-6"/>', skip: '<path d="m5 5 10 7-10 7zM19 5v14"/>'
+    back: '<path d="m15 18-6-6 6-6"/>', skip: '<path d="m5 5 10 7-10 7zM19 5v14"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/>'
   };
   const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
   const st = { tab: App.S.get('tab', 'today'), lib: 'Все', pw: null };
@@ -32,6 +33,59 @@
   const thumb = id => thumbCache[id] || (thumbCache[id] = Fig.thumb(EX[id], 1).outerHTML);
   const tempoText = t => { const [a, b, c] = t.split('-'); return `Опускание ${a} с · пауза ${b} с · подъём ${c} с`; };
   const toast = msg => { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); };
+
+  /* ============ СНЮС ============ */
+  const fmtH = h => String(h).replace('.', ',');
+  const clockOf = ts => new Date(ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  const fmtLeft = ms => { const s = Math.ceil(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h > 0 ? `${h} ч ${String(m).padStart(2, '0')} мин` : m > 0 ? `${m} мин` : `${s % 60} с`; };
+  const fmtSince = ms => { const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h > 0 ? `${h} ч ${m} мин` : `${m} мин`; };
+  function snusStatus() {
+    const log = App.snus(), intH = App.snusInterval(), now = Date.now(), today = App.iso(new Date());
+    const last = log.length ? log[log.length - 1] : null;
+    const cnt = log.filter(t => App.iso(new Date(t)) === today).length;
+    const leftMs = last ? Math.max(0, last + intH * 3600e3 - now) : 0;
+    return { last, intH, cnt, leftMs, sinceMs: last ? now - last : 0, allowed: !last || leftMs <= 0, nextTs: last ? last + intH * 3600e3 : null };
+  }
+  function snusCard() {
+    const s = snusStatus();
+    let body;
+    if (!s.last) {
+      body = `<div class="b" style="font-size:18px">Пока не отмечал</div><div class="sm muted" style="margin-top:4px">Жми «Закинул», когда закинешь — покажу, через сколько можно следующий.</div>`;
+    } else if (s.allowed) {
+      body = `<div class="num" style="font-size:30px">Можно</div><div class="sm muted" style="margin-top:4px">Прошло ${fmtSince(s.sinceMs)} с последнего · сегодня ${s.cnt}</div>`;
+    } else {
+      body = `<div class="row between"><div><div class="tag">До следующего</div><div class="num" id="snusLeft" style="font-size:32px">${fmtLeft(s.leftMs)}</div></div><div style="text-align:right"><div class="tag">Сегодня</div><div class="num" style="font-size:32px">${s.cnt}</div></div></div>
+        <div class="sm muted" style="margin-top:8px">Можно в ${clockOf(s.nextTs)}. Чем реже — тем лучше для тренировок.</div>`;
+    }
+    return `<div class="card" id="snuscard"><div class="row between" style="margin-bottom:10px"><span class="eyebrow">Снюс · интервал ${fmtH(s.intH)} ч</span><button class="btn sm ghost" data-a="snuscfg" style="min-height:34px;padding:0 12px">Настроить</button></div>
+      ${body}
+      <button class="btn block" data-a="snus" style="margin-top:12px">${ic('clock')} Закинул</button></div>`;
+  }
+  function snusSheetHTML() {
+    const s = snusStatus(), dayId = PROG.BY_DOW[new Date().getDay()];
+    const note = dayId
+      ? `Сегодня день тренировки (День ${dayId}). Старайся не кидать за час до и час после — никотин сужает сосуды и режет восстановление и пампинг.`
+      : `Никотин сужает сосуды и мешает мышцам восстанавливаться. Растягивать интервал — выгоднее для массы.`;
+    return `<div class="row between" style="margin-bottom:10px"><h2 style="font-size:24px">Снюс</h2><button class="ibtn" data-a="sclose" aria-label="Закрыть">${ic('x')}</button></div>
+      <div class="tag">Интервал между закладками</div>
+      <div class="stepper" style="margin:8px 0 14px"><button data-a="snusint" data-d="-0.5" aria-label="Короче интервал">−</button><div class="v"><b>${fmtH(s.intH)}</b><span>часов</span></div><button data-a="snusint" data-d="0.5" aria-label="Длиннее интервал">+</button></div>
+      <div class="row between" style="margin-bottom:14px"><div><div class="tag">Сегодня закинул</div><div class="num" style="font-size:28px">${s.cnt}</div></div><div class="col" style="gap:8px"><button class="btn sm" data-a="snusundo">Отменить последний</button><button class="btn sm ghost" data-a="snusreset">Сбросить за сегодня</button></div></div>
+      <div class="card" style="background:var(--raised);margin:0"><div class="eyebrow">Про тренировки</div><p class="sm" style="margin:6px 0 0">${note}</p></div>`;
+  }
+  function openSnusSheet() { const old = document.querySelector('.sheet'); if (old) old.remove(); sheet(snusSheetHTML()); }
+  let snusTmr = null;
+  function stopSnusTick() { if (snusTmr) { clearInterval(snusTmr); snusTmr = null; } }
+  function snusTick() {
+    stopSnusTick();
+    if (st.tab !== 'today' || !document.getElementById('snusLeft')) return;
+    snusTmr = setInterval(() => {
+      if (st.tab !== 'today' || W || $('#exov')) return stopSnusTick();
+      const el = document.getElementById('snusLeft'); if (!el) return stopSnusTick();
+      const s = snusStatus();
+      if (s.allowed) { const y = view.scrollTop; render(); view.scrollTop = y; return; }
+      el.textContent = fmtLeft(s.leftMs);
+    }, 1000);
+  }
 
   /* ============ СЕГОДНЯ ============ */
   function renderToday() {
@@ -64,6 +118,7 @@
       ${hero}
       <div class="kpi" style="margin-bottom:14px"><div><b>${thisWeek}/3</b><span>на этой неделе</span></div><div><b>${total}</b><span>всего тренировок</span></div><div><b>${wk}</b><span>неделя с начала</span></div></div>
       ${musicCard}
+      ${snusCard()}
       <div class="card"><div class="eyebrow">Выбрать другую</div><div class="row" style="margin-top:10px">${['A', 'B', 'C'].map(i => `<button class="btn sm grow" data-a="start" data-day="${i}">День ${i}</button>`).join('')}</div></div></div>`;
   }
 
@@ -251,7 +306,12 @@
     mtoggle: () => Music.toggle(), mnext: () => Music.next(), mprev: () => Music.prev(),
     bw: () => { const v = parseFloat(($('#bw').value || '').replace(',', '.')); if (!(v >= 30 && v <= 200)) { toast('Введи вес от 30 до 200 кг'); return; } App.addBody(v); render(); toast('Записано'); },
     sdset: () => { const v = $('#sd').value; if (v) { App.S.set('start', v); render(); toast('Дата сохранена'); } },
-    sdnow: () => { App.S.set('start', App.iso(App.mondayOf(new Date()))); render(); toast('Цикл начат с этой недели'); }
+    sdnow: () => { App.S.set('start', App.iso(App.mondayOf(new Date()))); render(); toast('Цикл начат с этой недели'); },
+    snus: () => { App.snusAdd(); render(); toast('Отметил'); },
+    snuscfg: () => openSnusSheet(),
+    snusint: t => { App.snusSetInterval(App.snusInterval() + (+t.dataset.d)); openSnusSheet(); render(); },
+    snusundo: () => { App.snusUndo(); openSnusSheet(); render(); toast('Отменил последний'); },
+    snusreset: () => { App.snusResetToday(); openSnusSheet(); render(); toast('Сброшено за сегодня'); }
   };
   document.addEventListener('click', e => { const t = e.target.closest('[data-a]'); if (!t) return; const f = A[t.dataset.a]; if (f) { e.preventDefault(); f(t, e); } });
   document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role=button],label.btn')) { e.preventDefault(); e.target.click(); } });
@@ -259,7 +319,7 @@
 
   /* ============ РОУТЕР ============ */
   function renderTabs() { tabsEl.innerHTML = TABS.map(([id, n]) => `<button data-a="tab" data-t="${id}" aria-current="${st.tab === id}">${ic({ today: 'today', plan: 'plan', lib: 'lib', music: 'music', stats: 'stats' }[id])}<span>${n}</span></button>`).join(''); }
-  function render() { view.innerHTML = { today: renderToday, plan: renderPlan, lib: renderLib, music: renderMusic, stats: renderStats }[st.tab](); renderTabs(); renderMini(); }
+  function render() { stopSnusTick(); view.innerHTML = { today: renderToday, plan: renderPlan, lib: renderLib, music: renderMusic, stats: renderStats }[st.tab](); renderTabs(); renderMini(); snusTick(); }
   function go(t) { st.tab = t; App.S.set('tab', t); render(); view.scrollTop = 0; }
 
   Music.on(() => { renderMini(); if (st.tab === 'music' && !W && !$('#exov')) { const y = view.scrollTop; render(); view.scrollTop = y; } updWMusic(); });

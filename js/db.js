@@ -18,7 +18,14 @@
     addSession(s) { const l = this.log(); l.push(s); S.set('log', l); const last = S.get('last', {}); for (const x of s.sets) last[x.ex] = { w: x.w, r: x.r }; S.set('last', last); },
     last(ex) { return S.get('last', {})[ex]; },
     body() { return S.get('body', []); },
-    addBody(kg) { const b = this.body().filter(x => x.d !== iso(new Date())); b.push({ d: iso(new Date()), kg }); b.sort((a, c) => a.d < c.d ? -1 : 1); S.set('body', b); }
+    addBody(kg) { const b = this.body().filter(x => x.d !== iso(new Date())); b.push({ d: iso(new Date()), kg }); b.sort((a, c) => a.d < c.d ? -1 : 1); S.set('body', b); },
+    /* снюс: журнал закладок (эпоха, мс) + интервал (часы) */
+    snus() { return S.get('snus', []); },
+    snusAdd() { const a = this.snus(); a.push(Date.now()); S.set('snus', a); return a; },
+    snusUndo() { const a = this.snus(); a.pop(); S.set('snus', a); return a; },
+    snusResetToday() { const t = iso(new Date()); const a = this.snus().filter(x => iso(new Date(x)) !== t); S.set('snus', a); return a; },
+    snusInterval() { return S.get('snusInt', 4); },
+    snusSetInterval(h) { h = Math.min(12, Math.max(1, Math.round(h * 2) / 2)); S.set('snusInt', h); return h; }
   };
 
   /* ---------- IndexedDB для музыки ---------- */
