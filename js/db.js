@@ -26,15 +26,18 @@
     snusResetToday() { const t = iso(new Date()); const a = this.snus().filter(x => iso(new Date(x)) !== t); S.set('snus', a); if (window.Sync) Sync.kick(); return a; },
     snusInterval() { return S.get('snusInt', 4); },
     snusSetInterval(h) { h = Math.min(12, Math.max(1, Math.round(h * 2) / 2)); S.set('snusInt', h); if (window.Sync) Sync.kick(); return h; },
-    /* бэкап: весь прогресс из localStorage (без музыки — она в IndexedDB и велика) */
+    /* бэкап: прогресс из localStorage (без музыки и без локальных ключей устройства).
+       ВАЖНО: syncToken/syncGist/syncAt и tab никогда не уходят в облако/бэкап —
+       иначе токен попадёт в gist и GitHub его отзовёт. */
+    _skip: { tab: 1, syncToken: 1, syncGist: 1, syncAt: 1 },
     dump() {
       const data = {};
-      try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf(KEY) === 0) { const short = k.slice(KEY.length); if (short !== 'tab') { try { data[short] = JSON.parse(localStorage.getItem(k)); } catch (e) { /* пропуск */ } } } } } catch (e) { /* приватный режим */ }
+      try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf(KEY) === 0) { const short = k.slice(KEY.length); if (!this._skip[short]) { try { data[short] = JSON.parse(localStorage.getItem(k)); } catch (e) { /* пропуск */ } } } } } catch (e) { /* приватный режим */ }
       return { app: 'gromila', v: 1, at: Date.now(), data };
     },
     restore(p) {
       if (!p || p.app !== 'gromila' || typeof p.data !== 'object' || !p.data) return false;
-      try { for (const k in p.data) { if (k === 'tab') continue; S.set(k, p.data[k]); } return true; } catch (e) { return false; }
+      try { for (const k in p.data) { if (this._skip[k]) continue; S.set(k, p.data[k]); } return true; } catch (e) { return false; }
     }
   };
 
