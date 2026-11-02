@@ -27,7 +27,7 @@
     down: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'
   };
   const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
-  const VER = '14';
+  const VER = '15';
   const st = { tab: App.S.get('tab', 'today'), lib: 'Все', pw: null };
   const TABS = [['today', 'Сегодня'], ['plan', 'Программа'], ['lib', 'Упражнения'], ['music', 'Музыка'], ['stats', 'Прогресс']];
 
@@ -244,6 +244,22 @@
       <button class="ibtn" style="border:0;background:none" data-a="mprev" aria-label="Назад">${ic('prev')}</button><button class="ibtn" data-a="mtoggle" aria-label="${Music.playing ? 'Пауза' : 'Играть'}">${ic(Music.playing ? 'pause' : 'play')}</button><button class="ibtn" style="border:0;background:none" data-a="mnext" aria-label="Дальше">${ic('next')}</button>`;
   }
 
+  function histSheet(s) {
+    const nm = ex => (window.EX && EX[ex]) ? EX[ex].name : ex;
+    const planned = PROG.DAYS[s.day] ? PROG.DAYS[s.day].list.map(x => x.ex) : [];
+    const byEx = {};
+    (s.sets || []).forEach(x => { (byEx[x.ex] = byEx[x.ex] || []).push(x); });
+    const done = Object.keys(byEx), skipped = planned.filter(ex => !byEx[ex]);
+    const totalSets = (s.sets || []).length, totalReps = (s.sets || []).reduce((a, x) => a + x.r, 0);
+    const date = App.parse(s.date).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+    const doneHtml = done.map(ex => { const a = byEx[ex], w = a.some(z => z.w > 0) ? ' · ' + a.map(z => fmt(z.w)).join('/') + ' кг' : ''; return `<div class="setrow"><div class="grow"><div class="b">${nm(ex)}</div><div class="xs muted">${a.length} подх · ${a.map(z => z.r).join(' · ')} повт${w}</div></div><span class="chip green">${ic('check')}</span></div>`; }).join('');
+    const skipHtml = skipped.length ? skipped.map(ex => `<div class="setrow"><div class="grow"><div class="b" style="color:var(--muted)">${nm(ex)}</div></div><span class="chip">—</span></div>`).join('') : '<p class="sm muted" style="margin:8px 0 0">Ничего не пропустил — весь день закрыл.</p>';
+    return `<div class="row between" style="margin-bottom:6px"><h2 style="font-size:24px">День ${s.day}</h2><button class="ibtn" data-a="sclose" aria-label="Закрыть">${ic('x')}</button></div>
+      <div class="sm muted" style="margin:0 0 14px">${date} · ${Math.round(s.dur / 60)} мин · ${totalSets} подходов · ${totalReps} повторов</div>
+      <div class="eyebrow">Сделал</div>${doneHtml || '<p class="sm muted" style="margin:8px 0 0">Подходов не записано.</p>'}
+      <div class="eyebrow" style="margin-top:14px">Пропустил</div>${skipHtml}`;
+  }
+
   /* ============ ПРОГРЕСС ============ */
   function chart(b) {
     if (b.length < 2) return '<p class="sm muted" style="margin:10px 0 0">Добавь вес минимум два раза, чтобы увидеть график.</p>';
@@ -262,7 +278,7 @@
       <div class="card"><div class="row between"><div><div class="eyebrow">Вес тела</div><div class="num" style="margin-top:4px;font-size:34px">${last ? fmt(last.kg) + ' кг' : '72 кг'}</div></div></div>
         <div class="row" style="margin-top:12px"><input id="bw" type="number" inputmode="decimal" step="0.1" min="30" max="200" placeholder="Сегодня, кг" aria-label="Вес тела, кг"><button class="btn primary" data-a="bw" style="flex:none">Записать</button></div>${chart(body)}</div>
       <div class="card"><div class="eyebrow">Рекорды</div>${Object.keys(prs).length ? Object.keys(prs).map(id => `<div class="setrow"><div class="grow b">${EX[id].name}</div><div class="num">${prs[id].w ? fmt(prs[id].w) + ' кг × ' + prs[id].r : prs[id].r + ' повт.'}</div></div>`).join('') : '<p class="sm muted" style="margin:8px 0 0">Пока пусто — первая тренировка всё заполнит.</p>'}</div>
-      <div class="card"><div class="eyebrow">История</div>${hist.length ? hist.map(s => `<div class="setrow"><div class="grow"><div class="b">День ${s.day} · ${PROG.DAYS[s.day].name}</div><div class="xs muted">${App.parse(s.date).toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' })} · ${Math.round(s.dur / 60)} мин</div></div><span class="chip">${s.sets.length} подх.</span></div>`).join('') : '<p class="sm muted" style="margin:8px 0 0">Тренировок пока нет.</p>'}</div>
+      <div class="card"><div class="eyebrow">История</div>${hist.length ? hist.map(s => `<button class="setrow" data-a="hist" data-id="${s.id}" style="width:100%;background:none;border:0;border-bottom:1px solid var(--line);text-align:left"><div class="grow"><div class="b">День ${s.day} · ${PROG.DAYS[s.day] ? PROG.DAYS[s.day].name : ''}</div><div class="xs muted">${App.parse(s.date).toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' })} · ${Math.round(s.dur / 60)} мин</div></div><span class="chip">${s.sets.length} подх.</span>${ic('chev')}</button>`).join('') : '<p class="sm muted" style="margin:8px 0 0">Тренировок пока нет.</p>'}<p class="xs muted" style="margin:8px 0 0">Нажми на тренировку — покажу, что сделал и что пропустил.</p></div>
       <div class="card"><div class="eyebrow">Старт программы</div><p class="sm muted" style="margin:6px 0 10px">Сейчас идёт неделя ${App.week()}. Дата начала — понедельник первой недели.</p><div class="row"><input id="sd" type="date" value="${App.startDate()}" aria-label="Дата начала программы"><button class="btn" data-a="sdset" style="flex:none">Сохранить</button></div><button class="btn ghost block" style="margin-top:10px" data-a="sdnow">Начать цикл с этой недели</button></div>
       ${syncCard()}
       <div class="card"><div class="eyebrow">Данные · бэкап</div>
@@ -387,7 +403,8 @@
     syncopen: () => sheet(syncSheet()),
     syncconn: async t => { const el = $('#synctok'), tok = el ? el.value : ''; if (!tok.trim()) { toast('Вставь токен'); return; } t.disabled = true; t.textContent = 'Подключаю…'; const r = await Sync.connect(tok); if (r.ok) { const sh = document.querySelector('.sheet'); if (sh) sh.remove(); render(); toast(r.warn ? 'Подключено, но: ' + r.warn : 'Синхронизация включена'); } else { t.disabled = false; t.textContent = 'Подключить'; toast(r.error || 'Не удалось подключить'); } },
     syncnow: async () => { toast('Синхронизирую…'); await Sync.sync(); render(); },
-    syncoff: () => { if (confirm('Отключить синхронизацию на этом устройстве? Данные останутся в приложении.')) { Sync.disconnect(); render(); toast('Синхронизация отключена'); } }
+    syncoff: () => { if (confirm('Отключить синхронизацию на этом устройстве? Данные останутся в приложении.')) { Sync.disconnect(); render(); toast('Синхронизация отключена'); } },
+    hist: t => { const id = +t.dataset.id, s = App.log().find(x => x.id === id); if (s) sheet(histSheet(s)); }
   };
   document.addEventListener('click', e => { const t = e.target.closest('[data-a]'); if (!t) return; const f = A[t.dataset.a]; if (f) { e.preventDefault(); f(t, e); } });
   document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role=button],label.btn')) { e.preventDefault(); e.target.click(); } });
