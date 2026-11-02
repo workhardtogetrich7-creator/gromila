@@ -110,6 +110,31 @@
       <div class="row" style="gap:10px;margin-top:12px"><label class="btn grow" for="bkpfilein" tabindex="0">Файл .json</label><input id="bkpfilein" type="file" accept="application/json,.json"><button class="btn primary grow" data-a="bkpdo">Восстановить</button></div>`;
   }
 
+  /* ============ СИНХРОНИЗАЦИЯ ============ */
+  function syncCard() {
+    const on = Sync.isOn(), s = Sync.status(), err = Sync.error();
+    const when = Sync.at() ? new Date(Sync.at()).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '';
+    let body;
+    if (!on) {
+      body = `<p class="sm muted" style="margin:6px 0 12px">Включи — и прогресс будет сам появляться на всех твоих устройствах через твой GitHub. Обновление раз в несколько секунд, без телефона и карты.</p><button class="btn primary block" data-a="syncopen">Подключить синхронизацию</button>`;
+    } else {
+      const txt = s === 'ok' ? `Синхронизировано${when ? ' · ' + when : ''}` : (s === 'sync' || s === 'connecting') ? 'Синхронизирую…' : s === 'offline' ? 'Нет сети — синхронизирую, когда появится' : s === 'error' ? ('Ошибка: ' + (err || 'нет связи')) : 'Подключено';
+      const chip = s === 'ok' ? '<span class="chip green">вкл</span>' : s === 'error' ? '<span class="chip red">!</span>' : '<span class="chip">…</span>';
+      body = `<div class="row between" style="margin:6px 0 12px"><div class="grow"><div class="b">${s === 'error' ? 'Нужно внимание' : 'Включена'}</div><div class="sm muted">${txt}</div></div>${chip}</div>
+        <div class="row" style="gap:10px"><button class="btn grow" data-a="syncnow">Синхронизировать сейчас</button><button class="btn ghost" data-a="syncoff">Отключить</button></div>`;
+    }
+    return `<div class="card"><div class="eyebrow">Синхронизация устройств</div>${body}</div>`;
+  }
+  function syncSheet() {
+    return `<div class="row between" style="margin-bottom:6px"><h2 style="font-size:24px">Синхронизация</h2><button class="ibtn" data-a="sclose" aria-label="Закрыть">${ic('x')}</button></div>
+      <p class="sm muted" style="margin:0 0 12px">Данные будут жить в приватном Gist на твоём GitHub и подтягиваться на все устройства, где введён этот токен. Телефон и карта не нужны.</p>
+      <ol class="sm" style="padding-left:20px;margin:0 0 12px"><li>Жми «Создать токен» — откроется GitHub (при запросе подтверди вход).</li><li>Проверь, что отмечен только <b>gist</b>, внизу — <b>Generate token</b>.</li><li>Скопируй токен (начинается с <b>ghp_</b>) и вставь ниже.</li></ol>
+      <a class="btn block" href="https://github.com/settings/tokens/new?scopes=gist&description=Gromila%20Sync" target="_blank" rel="noopener" style="margin-bottom:10px">${ic('copy')} Создать токен на GitHub</a>
+      <input id="synctok" type="password" placeholder="Вставь токен ghp_…" autocomplete="off" autocapitalize="off" spellcheck="false" style="width:100%;min-height:52px;border-radius:12px;border:1px solid var(--line2);background:var(--surface);color:var(--text);padding:0 14px;font:600 15px var(--body);margin-bottom:10px">
+      <button class="btn primary block" data-a="syncconn">Подключить</button>
+      <p class="xs muted" style="margin:10px 0 0">Токен хранится только на этом устройстве и даёт доступ только к твоим Gist. Отозвать можно в настройках GitHub в любой момент.</p>`;
+  }
+
   /* ============ СЕГОДНЯ ============ */
   function renderToday() {
     const now = new Date(), wk = App.week(now), ph = PROG.phaseOfWeek(wk), P = PROG.PHASES[ph];
@@ -238,8 +263,9 @@
       <div class="card"><div class="eyebrow">Рекорды</div>${Object.keys(prs).length ? Object.keys(prs).map(id => `<div class="setrow"><div class="grow b">${EX[id].name}</div><div class="num">${prs[id].w ? fmt(prs[id].w) + ' кг × ' + prs[id].r : prs[id].r + ' повт.'}</div></div>`).join('') : '<p class="sm muted" style="margin:8px 0 0">Пока пусто — первая тренировка всё заполнит.</p>'}</div>
       <div class="card"><div class="eyebrow">История</div>${hist.length ? hist.map(s => `<div class="setrow"><div class="grow"><div class="b">День ${s.day} · ${PROG.DAYS[s.day].name}</div><div class="xs muted">${App.parse(s.date).toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' })} · ${Math.round(s.dur / 60)} мин</div></div><span class="chip">${s.sets.length} подх.</span></div>`).join('') : '<p class="sm muted" style="margin:8px 0 0">Тренировок пока нет.</p>'}</div>
       <div class="card"><div class="eyebrow">Старт программы</div><p class="sm muted" style="margin:6px 0 10px">Сейчас идёт неделя ${App.week()}. Дата начала — понедельник первой недели.</p><div class="row"><input id="sd" type="date" value="${App.startDate()}" aria-label="Дата начала программы"><button class="btn" data-a="sdset" style="flex:none">Сохранить</button></div><button class="btn ghost block" style="margin-top:10px" data-a="sdnow">Начать цикл с этой недели</button></div>
+      ${syncCard()}
       <div class="card"><div class="eyebrow">Данные · бэкап</div>
-        <p class="sm muted" style="margin:6px 0 12px">Перенос журнала, веса и настроек на другое устройство. Музыка не входит — она хранится отдельно на каждом телефоне.</p>
+        <p class="sm muted" style="margin:6px 0 12px">Ручной перенос, если синхронизация выключена. Музыка не входит — она хранится отдельно на каждом телефоне.</p>
         <div class="row" style="gap:10px"><button class="btn grow" data-a="bkpfile">${ic('down')} Сохранить файл</button><button class="btn grow" data-a="bkpcode">${ic('copy')} Код</button></div>
         <button class="btn ghost block" style="margin-top:10px" data-a="bkprestore">Восстановить из кода или файла</button></div></div>`;
   }
@@ -345,8 +371,8 @@
     tdel: t => { if (confirm('Удалить трек?')) Music.remove(t.dataset.id); },
     mtoggle: () => Music.toggle(), mnext: () => Music.next(), mprev: () => Music.prev(),
     bw: () => { const v = parseFloat(($('#bw').value || '').replace(',', '.')); if (!(v >= 30 && v <= 200)) { toast('Введи вес от 30 до 200 кг'); return; } App.addBody(v); render(); toast('Записано'); },
-    sdset: () => { const v = $('#sd').value; if (v) { App.S.set('start', v); render(); toast('Дата сохранена'); } },
-    sdnow: () => { App.S.set('start', App.iso(App.mondayOf(new Date()))); render(); toast('Цикл начат с этой недели'); },
+    sdset: () => { const v = $('#sd').value; if (v) { App.S.set('start', v); if (window.Sync) Sync.kick(); render(); toast('Дата сохранена'); } },
+    sdnow: () => { App.S.set('start', App.iso(App.mondayOf(new Date()))); if (window.Sync) Sync.kick(); render(); toast('Цикл начат с этой недели'); },
     snus: () => { App.snusAdd(); render(); toast('Отметил'); },
     snuscfg: () => openSnusSheet(),
     snusint: t => { App.snusSetInterval(App.snusInterval() + (+t.dataset.d)); openSnusSheet(); render(); },
@@ -355,7 +381,11 @@
     bkpfile: () => { if (download(`gromila-backup-${App.iso(new Date())}.json`, JSON.stringify(App.dump()))) toast('Файл бэкапа сохранён'); else toast('Не удалось сохранить файл'); },
     bkpcode: async () => { const code = b64enc(JSON.stringify(App.dump())); try { await navigator.clipboard.writeText(code); toast('Код скопирован'); } catch (e) { copyFallback(code); } },
     bkprestore: () => sheet(bkpSheet()),
-    bkpdo: () => { const v = ($('#bkpin') && $('#bkpin').value || '').trim(); if (!v) { toast('Вставь код или выбери файл'); return; } applyBackup(v); }
+    bkpdo: () => { const v = ($('#bkpin') && $('#bkpin').value || '').trim(); if (!v) { toast('Вставь код или выбери файл'); return; } applyBackup(v); },
+    syncopen: () => sheet(syncSheet()),
+    syncconn: async t => { const el = $('#synctok'), tok = el ? el.value : ''; if (!tok.trim()) { toast('Вставь токен'); return; } t.disabled = true; t.textContent = 'Подключаю…'; const r = await Sync.connect(tok); if (r.ok) { const sh = document.querySelector('.sheet'); if (sh) sh.remove(); render(); toast(r.warn ? 'Подключено, но: ' + r.warn : 'Синхронизация включена'); } else { t.disabled = false; t.textContent = 'Подключить'; toast(r.error || 'Не удалось подключить'); } },
+    syncnow: async () => { toast('Синхронизирую…'); await Sync.sync(); render(); },
+    syncoff: () => { if (confirm('Отключить синхронизацию на этом устройстве? Данные останутся в приложении.')) { Sync.disconnect(); render(); toast('Синхронизация отключена'); } }
   };
   document.addEventListener('click', e => { const t = e.target.closest('[data-a]'); if (!t) return; const f = A[t.dataset.a]; if (f) { e.preventDefault(); f(t, e); } });
   document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role=button],label.btn')) { e.preventDefault(); e.target.click(); } });
@@ -370,6 +400,9 @@
   function go(t) { st.tab = t; App.S.set('tab', t); render(); view.scrollTop = 0; }
 
   Music.on(() => { renderMini(); if (st.tab === 'music' && !W && !$('#exov')) { const y = view.scrollTop; render(); view.scrollTop = y; } updWMusic(); });
+  const refreshStats = () => { if (st.tab === 'stats' && !W && !$('#exov')) { const y = view.scrollTop; render(); view.scrollTop = y; } };
+  window.onSyncApplied = refreshStats;
+  if (window.Sync) Sync.on(refreshStats);
   Music.load().then(render);
   render();
   if ('serviceWorker' in navigator && /^https:|^http:\/\/localhost/.test(location.href) && !/localhost|127\.0\.0\.1/.test(location.host)) navigator.serviceWorker.register('sw.js').catch(() => {});
