@@ -72,7 +72,7 @@
       setStatus('ok');
       if (window.onSyncApplied) window.onSyncApplied();
     } catch (e) {
-      setStatus('error', e.code === 401 ? 'Токен недействителен' : 'Нет связи с GitHub');
+      setStatus('error', e.code === 401 ? 'Токен недействителен' : e.code === 404 ? 'У токена нет доступа «gist»' : 'Нет связи с GitHub');
     } finally { busy = false; }
   }
   function startTimer() { stopTimer(); timer = setInterval(() => { if (document.visibilityState === 'visible') doSync(); }, 15000); }
@@ -88,12 +88,17 @@
       tok = (tok || '').trim();
       if (!tok) return { ok: false, error: 'Пустой токен' };
       token = tok; setStatus('connecting');
-      try { await api('/user'); } catch (e) { token = ''; S.set(KEY, ''); setStatus('off'); return { ok: false, error: e.code === 401 ? 'Токен не подошёл (нужен доступ gist)' : 'Нет связи с GitHub' }; }
+      let scopes = '';
+      try {
+        const r = await fetch(API + '/user', { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' }, cache: 'no-store' });
+        if (!r.ok) { const e = new Error('x'); e.code = r.status; throw e; }
+        scopes = r.headers.get('x-oauth-scopes') || '';
+      } catch (e) { token = ''; S.set(KEY, ''); setStatus('off'); return { ok: false, error: e.code === 401 ? 'Токен не подошёл' : 'Нет связи с GitHub' }; }
+      if (!/\bgist\b/.test(scopes)) { token = ''; S.set(KEY, ''); setStatus('off'); return { ok: false, error: 'У токена нет доступа «gist». Создай токен заново с галочкой gist.' }; }
       S.set(KEY, token);
       await doSync();
-      if (status === 'error') { startTimer(); return { ok: true, warn: lastError }; }
       startTimer();
-      return { ok: true };
+      return status === 'error' ? { ok: true, warn: lastError } : { ok: true };
     },
     disconnect() { token = ''; gistId = ''; S.set(KEY, ''); S.set(GKEY, ''); stopTimer(); setStatus('off'); },
     sync() { return doSync(); },
