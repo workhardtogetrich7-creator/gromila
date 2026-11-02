@@ -23,7 +23,8 @@
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>', chev: '<path d="m9 6 6 6-6 6"/>',
     flame: '<path d="M12 22c4 0 7-3 7-7 0-3-2-5-3-7-1 2-2 3-3 3 0-4-2-7-4-9 0 4-4 6-4 12 0 4 3 8 7 8z"/>',
     back: '<path d="m15 18-6-6 6-6"/>', skip: '<path d="m5 5 10 7-10 7zM19 5v14"/>',
-    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/>'
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/>',
+    down: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'
   };
   const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
   const st = { tab: App.S.get('tab', 'today'), lib: 'Все', pw: null };
@@ -85,6 +86,28 @@
       if (s.allowed) { const y = view.scrollTop; render(); view.scrollTop = y; return; }
       el.textContent = fmtLeft(s.leftMs);
     }, 1000);
+  }
+
+  /* ============ БЭКАП ============ */
+  const b64enc = s => btoa(unescape(encodeURIComponent(s)));
+  const b64dec = s => decodeURIComponent(escape(atob(s)));
+  function download(name, text) { try { const b = new Blob([text], { type: 'application/json' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 1500); return true; } catch (e) { return false; } }
+  function copyFallback(code) { sheet(`<div class="row between" style="margin-bottom:6px"><h2 style="font-size:22px">Код бэкапа</h2><button class="ibtn" data-a="sclose" aria-label="Закрыть">${ic('x')}</button></div><p class="sm muted" style="margin:0 0 10px">Выдели и скопируй вручную, потом вставь на другом устройстве в «Восстановить».</p><textarea readonly style="width:100%;min-height:120px;border-radius:12px;border:1px solid var(--line2);background:var(--surface);color:var(--text);padding:12px;font:500 13px var(--body)">${esc(code)}</textarea><button class="btn block" style="margin-top:10px" data-a="sclose">Закрыть</button>`); }
+  function applyBackup(raw) {
+    let p = null;
+    try { p = JSON.parse(raw); } catch (e) { try { p = JSON.parse(b64dec(raw.trim())); } catch (e2) { /* не распознан */ } }
+    if (!p) { toast('Не удалось прочитать бэкап'); return; }
+    if (p.app !== 'gromila') { toast('Это не бэкап Громилы'); return; }
+    if (!confirm('Заменить данные на этом устройстве данными из бэкапа?')) return;
+    if (!App.restore(p)) { toast('Ошибка восстановления'); return; }
+    const sh = document.querySelector('.sheet'); if (sh) sh.remove();
+    render(); toast('Данные восстановлены');
+  }
+  function bkpSheet() {
+    return `<div class="row between" style="margin-bottom:6px"><h2 style="font-size:24px">Восстановить</h2><button class="ibtn" data-a="sclose" aria-label="Закрыть">${ic('x')}</button></div>
+      <p class="sm muted" style="margin:0 0 12px">Вставь код бэкапа или выбери файл .json с другого устройства. Это заменит данные здесь.</p>
+      <textarea id="bkpin" placeholder="Вставь код сюда" style="width:100%;min-height:90px;border-radius:12px;border:1px solid var(--line2);background:var(--surface);color:var(--text);padding:12px;font:500 14px var(--body);resize:vertical"></textarea>
+      <div class="row" style="gap:10px;margin-top:12px"><label class="btn grow" for="bkpfilein" tabindex="0">Файл .json</label><input id="bkpfilein" type="file" accept="application/json,.json"><button class="btn primary grow" data-a="bkpdo">Восстановить</button></div>`;
   }
 
   /* ============ СЕГОДНЯ ============ */
@@ -214,7 +237,11 @@
         <div class="row" style="margin-top:12px"><input id="bw" type="number" inputmode="decimal" step="0.1" min="30" max="200" placeholder="Сегодня, кг" aria-label="Вес тела, кг"><button class="btn primary" data-a="bw" style="flex:none">Записать</button></div>${chart(body)}</div>
       <div class="card"><div class="eyebrow">Рекорды</div>${Object.keys(prs).length ? Object.keys(prs).map(id => `<div class="setrow"><div class="grow b">${EX[id].name}</div><div class="num">${prs[id].w ? fmt(prs[id].w) + ' кг × ' + prs[id].r : prs[id].r + ' повт.'}</div></div>`).join('') : '<p class="sm muted" style="margin:8px 0 0">Пока пусто — первая тренировка всё заполнит.</p>'}</div>
       <div class="card"><div class="eyebrow">История</div>${hist.length ? hist.map(s => `<div class="setrow"><div class="grow"><div class="b">День ${s.day} · ${PROG.DAYS[s.day].name}</div><div class="xs muted">${App.parse(s.date).toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' })} · ${Math.round(s.dur / 60)} мин</div></div><span class="chip">${s.sets.length} подх.</span></div>`).join('') : '<p class="sm muted" style="margin:8px 0 0">Тренировок пока нет.</p>'}</div>
-      <div class="card"><div class="eyebrow">Старт программы</div><p class="sm muted" style="margin:6px 0 10px">Сейчас идёт неделя ${App.week()}. Дата начала — понедельник первой недели.</p><div class="row"><input id="sd" type="date" value="${App.startDate()}" aria-label="Дата начала программы"><button class="btn" data-a="sdset" style="flex:none">Сохранить</button></div><button class="btn ghost block" style="margin-top:10px" data-a="sdnow">Начать цикл с этой недели</button></div></div>`;
+      <div class="card"><div class="eyebrow">Старт программы</div><p class="sm muted" style="margin:6px 0 10px">Сейчас идёт неделя ${App.week()}. Дата начала — понедельник первой недели.</p><div class="row"><input id="sd" type="date" value="${App.startDate()}" aria-label="Дата начала программы"><button class="btn" data-a="sdset" style="flex:none">Сохранить</button></div><button class="btn ghost block" style="margin-top:10px" data-a="sdnow">Начать цикл с этой недели</button></div>
+      <div class="card"><div class="eyebrow">Данные · бэкап</div>
+        <p class="sm muted" style="margin:6px 0 12px">Перенос журнала, веса и настроек на другое устройство. Музыка не входит — она хранится отдельно на каждом телефоне.</p>
+        <div class="row" style="gap:10px"><button class="btn grow" data-a="bkpfile">${ic('down')} Сохранить файл</button><button class="btn grow" data-a="bkpcode">${ic('copy')} Код</button></div>
+        <button class="btn ghost block" style="margin-top:10px" data-a="bkprestore">Восстановить из кода или файла</button></div></div>`;
   }
 
   /* ============ ТРЕНИРОВКА ============ */
@@ -324,11 +351,18 @@
     snuscfg: () => openSnusSheet(),
     snusint: t => { App.snusSetInterval(App.snusInterval() + (+t.dataset.d)); openSnusSheet(); render(); },
     snusundo: () => { App.snusUndo(); openSnusSheet(); render(); toast('Отменил последний'); },
-    snusreset: () => { App.snusResetToday(); openSnusSheet(); render(); toast('Сброшено за сегодня'); }
+    snusreset: () => { App.snusResetToday(); openSnusSheet(); render(); toast('Сброшено за сегодня'); },
+    bkpfile: () => { if (download(`gromila-backup-${App.iso(new Date())}.json`, JSON.stringify(App.dump()))) toast('Файл бэкапа сохранён'); else toast('Не удалось сохранить файл'); },
+    bkpcode: async () => { const code = b64enc(JSON.stringify(App.dump())); try { await navigator.clipboard.writeText(code); toast('Код скопирован'); } catch (e) { copyFallback(code); } },
+    bkprestore: () => sheet(bkpSheet()),
+    bkpdo: () => { const v = ($('#bkpin') && $('#bkpin').value || '').trim(); if (!v) { toast('Вставь код или выбери файл'); return; } applyBackup(v); }
   };
   document.addEventListener('click', e => { const t = e.target.closest('[data-a]'); if (!t) return; const f = A[t.dataset.a]; if (f) { e.preventDefault(); f(t, e); } });
   document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role=button],label.btn')) { e.preventDefault(); e.target.click(); } });
-  document.addEventListener('change', async e => { if (e.target.id === 'file') { const n = e.target.files.length; await Music.add([...e.target.files]); toast(`Добавлено треков: ${n}`); } });
+  document.addEventListener('change', async e => {
+    if (e.target.id === 'file') { const n = e.target.files.length; await Music.add([...e.target.files]); toast(`Добавлено треков: ${n}`); }
+    else if (e.target.id === 'bkpfilein') { const f = e.target.files[0]; if (f) { try { applyBackup(await f.text()); } catch (err) { toast('Не удалось прочитать файл'); } } }
+  });
 
   /* ============ РОУТЕР ============ */
   function renderTabs() { tabsEl.innerHTML = TABS.map(([id, n]) => `<button data-a="tab" data-t="${id}" aria-current="${st.tab === id}">${ic({ today: 'today', plan: 'plan', lib: 'lib', music: 'music', stats: 'stats' }[id])}<span>${n}</span></button>`).join(''); }

@@ -25,7 +25,17 @@
     snusUndo() { const a = this.snus(); a.pop(); S.set('snus', a); return a; },
     snusResetToday() { const t = iso(new Date()); const a = this.snus().filter(x => iso(new Date(x)) !== t); S.set('snus', a); return a; },
     snusInterval() { return S.get('snusInt', 4); },
-    snusSetInterval(h) { h = Math.min(12, Math.max(1, Math.round(h * 2) / 2)); S.set('snusInt', h); return h; }
+    snusSetInterval(h) { h = Math.min(12, Math.max(1, Math.round(h * 2) / 2)); S.set('snusInt', h); return h; },
+    /* бэкап: весь прогресс из localStorage (без музыки — она в IndexedDB и велика) */
+    dump() {
+      const data = {};
+      try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf(KEY) === 0) { const short = k.slice(KEY.length); if (short !== 'tab') { try { data[short] = JSON.parse(localStorage.getItem(k)); } catch (e) { /* пропуск */ } } } } } catch (e) { /* приватный режим */ }
+      return { app: 'gromila', v: 1, at: Date.now(), data };
+    },
+    restore(p) {
+      if (!p || p.app !== 'gromila' || typeof p.data !== 'object' || !p.data) return false;
+      try { for (const k in p.data) { if (k === 'tab') continue; S.set(k, p.data[k]); } return true; } catch (e) { return false; }
+    }
   };
 
   /* ---------- IndexedDB для музыки ---------- */
