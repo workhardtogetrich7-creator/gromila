@@ -89,14 +89,14 @@
 
   function limb(parent, w, far) {
     const g = el('g', { class: far ? 'far' : 'near' }, parent);
-    const o = el('line', { stroke: '#5b6d96', 'stroke-width': w + 3, 'stroke-linecap': 'round' }, g);
-    const b = el('line', { stroke: far ? '#a9b6d3' : '#d7e0f2', 'stroke-width': w, 'stroke-linecap': 'round' }, g);
+    const o = el('line', { stroke: '#4a4a52', 'stroke-width': w + 3, 'stroke-linecap': 'round' }, g);
+    const b = el('line', { stroke: far ? '#aaaaa6' : '#dcdcd7', 'stroke-width': w, 'stroke-linecap': 'round' }, g);
     const h = el('line', { stroke: '#fff', 'stroke-opacity': far ? 0.15 : 0.45, 'stroke-width': Math.max(2, w * 0.28), 'stroke-linecap': 'round' }, g);
     return { g, set(a, c) { setLine(o, a, c); setLine(b, a, c); const dx = -w * 0.18; setLine(h, [a[0] + dx, a[1] - w * 0.18], [c[0] + dx, c[1] - w * 0.18]); } };
   }
   function overlay(parent) {
     const g = el('g', { 'stroke-linecap': 'round', fill: 'none' }, parent);
-    const a = el('line', { stroke: '#ff2d46' }, g), b = el('line', { stroke: '#ff7a86' }, g);
+    const a = el('line', { stroke: '#e23b42' }, g), b = el('line', { stroke: '#ff7078' }, g);
     return { set(p, q, w, op) {
       setLine(a, p, q); setLine(b, p, q);
       a.setAttribute('stroke-width', w + 5); a.setAttribute('stroke-opacity', op * 0.35);
@@ -105,18 +105,18 @@
   }
   function blob(parent) {
     const g = el('g', {}, parent);
-    const a = el('circle', { fill: '#ff2d46' }, g), b = el('circle', { fill: '#ff7a86' }, g);
+    const a = el('circle', { fill: '#e23b42' }, g), b = el('circle', { fill: '#ff7078' }, g);
     return { set(c, r, op) { for (const [e, k, o] of [[a, 1.45, op * 0.35], [b, 1, op]]) { e.setAttribute('cx', c[0]); e.setAttribute('cy', c[1]); e.setAttribute('r', r * k); e.setAttribute('fill-opacity', o); } },
       hide() { a.setAttribute('fill-opacity', 0); b.setAttribute('fill-opacity', 0); } };
   }
   function weight(parent) {
     const g = el('g', {}, parent);
-    const back = el('circle', { fill: '#10172b', stroke: '#4d5f8c', 'stroke-width': 1.5 }, g);
-    const front = el('circle', { fill: '#1a2340', stroke: '#8aa0d6', 'stroke-width': 1.5 }, g);
-    const hub = el('circle', { fill: '#6c7fb0' }, g);
-    const bar = el('rect', { fill: '#222c4d', stroke: '#8aa0d6', 'stroke-width': 1.2, rx: 2 }, g);
-    const p1 = el('rect', { fill: '#1a2340', stroke: '#8aa0d6', 'stroke-width': 1.2, rx: 2 }, g);
-    const p2 = el('rect', { fill: '#1a2340', stroke: '#8aa0d6', 'stroke-width': 1.2, rx: 2 }, g);
+    const back = el('circle', { fill: '#141416', stroke: '#55555c', 'stroke-width': 1.5 }, g);
+    const front = el('circle', { fill: '#1c1c1f', stroke: '#8a8a90', 'stroke-width': 1.5 }, g);
+    const hub = el('circle', { fill: '#9a9aa0' }, g);
+    const bar = el('rect', { fill: '#26262a', stroke: '#8a8a90', 'stroke-width': 1.2, rx: 2 }, g);
+    const p1 = el('rect', { fill: '#1c1c1f', stroke: '#8a8a90', 'stroke-width': 1.2, rx: 2 }, g);
+    const p2 = el('rect', { fill: '#1c1c1f', stroke: '#8a8a90', 'stroke-width': 1.2, rx: 2 }, g);
     return { set(pos, kind, far) {
       g.setAttribute('opacity', far ? 0.6 : 1);
       const x = pos[0], y = pos[1], end = kind !== 'side';
@@ -138,23 +138,23 @@
   /* ---------- окружение ---------- */
   function drawEnv(svg, env) {
     const g = el('g', {}, svg);
-    el('rect', { x: 8, y: 262, width: 284, height: 14, rx: 4, fill: '#0c1330', stroke: '#27407a', 'stroke-width': 1.2 }, g);
-    el('line', { x1: 14, y1: 262.5, x2: 286, y2: 262.5, stroke: '#4aa8ff', 'stroke-opacity': 0.35, 'stroke-width': 1.5 }, g);
+    el('rect', { x: 8, y: 262, width: 284, height: 14, rx: 4, fill: '#121214', stroke: '#3a3a40', 'stroke-width': 1.2 }, g);
+    el('line', { x1: 14, y1: 262.5, x2: 286, y2: 262.5, stroke: '#e3b968', 'stroke-opacity': 0.35, 'stroke-width': 1.5 }, g);
     for (const e of env || []) {
       if (e.t === 'pullbar') {
-        el('rect', { x: e.x + 52, y: e.y - 12, width: 9, height: 262 - e.y + 12, rx: 3, fill: '#1b2547', stroke: '#4d6196' }, g);
-        el('line', { x1: e.x, y1: e.y, x2: e.x + 56, y2: e.y, stroke: '#3a4a7c', 'stroke-width': 7, 'stroke-linecap': 'round' }, g);
-        el('circle', { cx: e.x, cy: e.y, r: 5.5, fill: '#8aa0d6', stroke: '#c9d6f5' }, g);
-        el('rect', { x: e.x + 42, y: 258, width: 40, height: 5, rx: 2, fill: '#1b2547', stroke: '#4d6196' }, g);
+        el('rect', { x: e.x + 52, y: e.y - 12, width: 9, height: 262 - e.y + 12, rx: 3, fill: '#1d1d20', stroke: '#55555c' }, g);
+        el('line', { x1: e.x, y1: e.y, x2: e.x + 56, y2: e.y, stroke: '#3a3a40', 'stroke-width': 7, 'stroke-linecap': 'round' }, g);
+        el('circle', { cx: e.x, cy: e.y, r: 5.5, fill: '#8a8a90', stroke: '#d0d0cc' }, g);
+        el('rect', { x: e.x + 42, y: 258, width: 40, height: 5, rx: 2, fill: '#1d1d20', stroke: '#55555c' }, g);
       } else if (e.t === 'dips') {
-        el('rect', { x: e.x + 40, y: e.y - 4, width: 9, height: 262 - e.y + 4, rx: 3, fill: '#1b2547', stroke: '#4d6196' }, g);
-        el('line', { x1: e.x - 14, y1: e.y, x2: e.x + 44, y2: e.y, stroke: '#3a4a7c', 'stroke-width': 7, 'stroke-linecap': 'round' }, g);
-        el('circle', { cx: e.x - 14, cy: e.y, r: 5.5, fill: '#8aa0d6', stroke: '#c9d6f5' }, g);
-        el('rect', { x: e.x + 24, y: 258, width: 40, height: 5, rx: 2, fill: '#1b2547', stroke: '#4d6196' }, g);
+        el('rect', { x: e.x + 40, y: e.y - 4, width: 9, height: 262 - e.y + 4, rx: 3, fill: '#1d1d20', stroke: '#55555c' }, g);
+        el('line', { x1: e.x - 14, y1: e.y, x2: e.x + 44, y2: e.y, stroke: '#3a3a40', 'stroke-width': 7, 'stroke-linecap': 'round' }, g);
+        el('circle', { cx: e.x - 14, cy: e.y, r: 5.5, fill: '#8a8a90', stroke: '#d0d0cc' }, g);
+        el('rect', { x: e.x + 24, y: 258, width: 40, height: 5, rx: 2, fill: '#1d1d20', stroke: '#55555c' }, g);
       } else if (e.t === 'chair') {
-        el('rect', { x: e.x, y: e.y, width: e.w, height: 8, rx: 3, fill: '#1b2547', stroke: '#5a70ad' }, g);
-        el('rect', { x: e.x + 3, y: e.y + 8, width: 6, height: 262 - e.y - 8, fill: '#161f3d', stroke: '#3d5088' }, g);
-        el('rect', { x: e.x + e.w - 9, y: e.y + 8, width: 6, height: 262 - e.y - 8, fill: '#161f3d', stroke: '#3d5088' }, g);
+        el('rect', { x: e.x, y: e.y, width: e.w, height: 8, rx: 3, fill: '#1d1d20', stroke: '#6a6a72' }, g);
+        el('rect', { x: e.x + 3, y: e.y + 8, width: 6, height: 262 - e.y - 8, fill: '#161618', stroke: '#44444a' }, g);
+        el('rect', { x: e.x + e.w - 9, y: e.y + 8, width: 6, height: 262 - e.y - 8, fill: '#161618', stroke: '#44444a' }, g);
       }
     }
   }
@@ -165,26 +165,26 @@
     svg.innerHTML = '';
     drawEnv(svg, cfg.env);
     const R = { front };
-    R.trail = el('path', { class: 'trail', fill: 'none', stroke: '#52c7ff', 'stroke-width': 2.2, 'stroke-linecap': 'round', 'stroke-dasharray': '2 6', opacity: 0.9 }, svg);
+    R.trail = el('path', { class: 'trail', fill: 'none', stroke: '#e3b968', 'stroke-width': 2.2, 'stroke-linecap': 'round', 'stroke-dasharray': '2 6', opacity: 0.9 }, svg);
     const fig = el('g', {}, svg);
     if (!front) {
       R.fleg = [limb(fig, 19, true), limb(fig, 14, true)];
       R.farm = [limb(fig, 12.5, true), limb(fig, 10.5, true)];
-      R.fshoe = el('line', { stroke: '#7d8db3', 'stroke-width': 7, 'stroke-linecap': 'round' }, fig);
+      R.fshoe = el('line', { stroke: '#78787e', 'stroke-width': 7, 'stroke-linecap': 'round' }, fig);
       R.fdb = weight(fig);
-      R.torso = limb(fig, 30); R.neck = limb(fig, 9); R.glute = el('circle', { r: 15, fill: '#d7e0f2', stroke: '#5b6d96', 'stroke-width': 1.5 }, fig);
+      R.torso = limb(fig, 30); R.neck = limb(fig, 9); R.glute = el('circle', { r: 15, fill: '#dcdcd7', stroke: '#4a4a52', 'stroke-width': 1.5 }, fig);
       R.torso.g.insertBefore(R.glute, R.torso.g.firstChild);
-      R.head = el('circle', { r: 12, fill: '#e6edfa', stroke: '#5b6d96', 'stroke-width': 1.5 }, fig);
+      R.head = el('circle', { r: 12, fill: '#e8e8e4', stroke: '#4a4a52', 'stroke-width': 1.5 }, fig);
       R.leg = [limb(fig, 19), limb(fig, 14)];
-      R.shoe = el('line', { stroke: '#9fb0d6', 'stroke-width': 7, 'stroke-linecap': 'round' }, fig);
+      R.shoe = el('line', { stroke: '#9a9a9e', 'stroke-width': 7, 'stroke-linecap': 'round' }, fig);
       R.arm = [limb(fig, 12.5), limb(fig, 10.5)];
-      R.delt = el('circle', { r: 11, fill: '#d7e0f2', stroke: '#5b6d96', 'stroke-width': 1.5 }, fig);
+      R.delt = el('circle', { r: 11, fill: '#dcdcd7', stroke: '#4a4a52', 'stroke-width': 1.5 }, fig);
       R.db = weight(fig);
       R.ovA = overlay(fig); R.ovB = overlay(fig); R.ovC = overlay(fig); R.bl = blob(fig); R.bl2 = blob(fig);
     } else {
       R.legs = [0, 1].map(() => [limb(fig, 17), limb(fig, 13)]);
-      R.torso = el('path', { fill: '#d7e0f2', stroke: '#5b6d96', 'stroke-width': 1.5, 'stroke-linejoin': 'round' }, fig);
-      R.head = el('circle', { r: 12, fill: '#e6edfa', stroke: '#5b6d96', 'stroke-width': 1.5 }, fig);
+      R.torso = el('path', { fill: '#dcdcd7', stroke: '#4a4a52', 'stroke-width': 1.5, 'stroke-linejoin': 'round' }, fig);
+      R.head = el('circle', { r: 12, fill: '#e8e8e4', stroke: '#4a4a52', 'stroke-width': 1.5 }, fig);
       R.neck = limb(fig, 9);
       R.arms = [0, 1].map(() => [limb(fig, 11), limb(fig, 9.5)]);
       R.dbs = [weight(fig), weight(fig)];
