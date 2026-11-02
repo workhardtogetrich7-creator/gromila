@@ -59,7 +59,7 @@
     const musicCard = trk ? `<div class="card row" data-a="tab" data-t="music" role="button" tabindex="0"><div class="ibtn">${ic('music')}</div><div class="grow"><div class="b">${cur ? esc(cur.name) : 'Моя музыка'}</div><div class="sm muted">${trk} ${trk === 1 ? 'трек' : 'треков'} · нажми, чтобы включить</div></div>${ic('chev')}</div>`
       : `<div class="card row" data-a="tab" data-t="music" role="button" tabindex="0"><div class="ibtn">${ic('music')}</div><div class="grow"><div class="b">Добавь свою музыку</div><div class="sm muted">Загрузи треки — они будут играть во время тренировки</div></div>${ic('chev')}</div>`;
     const total = log.length, thisWeek = log.filter(s => s.date >= App.iso(mon)).length;
-    return `<div class="page"><div class="top"><div><div class="brand">Громила</div><div class="sm muted">${now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}</div></div><span class="chip red">${ic('flame')} Неделя ${((wk - 1) % 8) + 1}/8</span></div>
+    return `<div class="page"><div class="top"><div><div class="brand">Громила</div><div class="sm muted">${now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}</div></div><span class="chip">${ic('flame')} Неделя ${((wk - 1) % 8) + 1}/8</span></div>
       <div class="card"><div class="row between" style="margin-bottom:8px"><span class="eyebrow">Фаза · ${P.name}</span><span class="chip">Темп ${P.tempo}</span></div><div class="week">${week}</div></div>
       ${hero}
       <div class="kpi" style="margin-bottom:14px"><div><b>${thisWeek}/3</b><span>на этой неделе</span></div><div><b>${total}</b><span>всего тренировок</span></div><div><b>${wk}</b><span>неделя с начала</span></div></div>
@@ -76,7 +76,7 @@
       <p class="xs muted" style="margin:0 0 12px">Разминка: ${d.warm}</p><button class="btn primary block" data-a="start" data-day="${d.id}">${ic('play')} Начать день ${d.id}</button></div>`).join('');
     return `<div class="page"><div class="top"><h1 class="h1">Программа</h1><span class="chip">8 недель · 3 дня</span></div>
       <div class="phases" role="group" aria-label="Недели">${weeks}</div>
-      <div class="card glow"><div class="eyebrow">Недели ${P.weeks}</div><h2 style="margin:4px 0 8px;font-size:26px">${P.name}</h2><div class="row wrap" style="margin-bottom:10px"><span class="chip">Темп ${P.tempo}</span><span class="chip red">${P.rpe}</span></div><p class="sm" style="margin:0">${P.tech}</p></div>
+      <div class="card glow"><div class="eyebrow">Недели ${P.weeks}</div><h2 style="margin:4px 0 8px;font-size:26px">${P.name}</h2><div class="row wrap" style="margin-bottom:10px"><span class="chip">Темп ${P.tempo}</span><span class="chip">${P.rpe}</span></div><p class="sm" style="margin:0">${P.tech}</p></div>
       ${days}
       <div class="card"><div class="eyebrow">Как читать темп «3-1-1»</div><p class="sm" style="margin:8px 0 0">Первая цифра — секунды на <b>опускание</b>, вторая — <b>пауза</b> в растянутой точке, третья — <b>подъём</b>. На лёгких гантелях именно медленное опускание и паузы делают нагрузку тяжёлой для мышц.</p></div>
       <div class="card"><div class="eyebrow">Твои гантели</div><p class="sm" style="margin:8px 0 0"><b>Гантель ≈ 7,5 кг:</b> на гриф 35 см — по 2 диска 2 кг и 2 диска 1,5 кг + фиксаторы.<br><b>Одна гантель ≈ 15 кг</b> (для тяги, приседа, моста): все диски на один гриф.<br><b>Штанга ≈ 15 кг:</b> оба грифа на переходник 40 см, диски по краям.</p></div>
@@ -97,7 +97,7 @@
       <h3 style="font-size:18px;margin:10px 0 4px;color:var(--cyan)">Как делать</h3><ol>${e.steps.map(s => `<li>${s}</li>`).join('')}</ol>
       <h3 style="font-size:18px;margin:10px 0 4px;color:var(--red)">Частые ошибки</h3><ul>${e.mistakes.map(s => `<li>${s}</li>`).join('')}</ul>
       <div class="row wrap" style="margin-bottom:10px"><span class="chip">Темп ${e.tempo}</span><span class="chip">${e.breath}</span></div><p class="sm muted" style="margin:0 0 6px">${tempoText(e.tempo)}</p>
-      <div class="card" style="margin:12px 0 0;background:rgba(227,185,104,.08)"><div class="eyebrow">Совет</div><p class="sm" style="margin:6px 0 0">${e.tip}</p></div>`;
+      <div class="card" style="margin:12px 0 0;background:var(--raised)"><div class="eyebrow">Совет</div><p class="sm" style="margin:6px 0 0">${e.tip}</p></div>`;
   }
 
   let exFig = null;
@@ -114,7 +114,7 @@
   function renderMusic() {
     const L = Music.list, cur = Music.cur;
     return `<div class="page"><div class="top"><h1 class="h1">Музыка</h1><span class="chip">${L.length} треков</span></div>
-      <div class="drop"><div class="ibtn" style="background:rgba(227,185,104,.16)">${ic('music')}</div><div class="b">Загрузи свою музыку</div><div class="sm muted">mp3, m4a, wav — выбери файлы из приложения «Файлы» на iPhone</div>
+      <div class="drop"><div class="ibtn" style="background:var(--raised)">${ic('music')}</div><div class="b">Загрузи свою музыку</div><div class="sm muted">mp3, m4a, wav — выбери файлы из приложения «Файлы» на iPhone</div>
       <label class="btn primary lg" for="file" tabindex="0" style="margin-top:6px">${ic('plus')} Добавить треки</label><input id="file" type="file" accept="audio/*,.mp3,.m4a,.aac,.wav,.flac" multiple></div>
       <div class="row" style="margin:14px 0"><button class="btn grow ${Music.shuffle ? 'primary' : ''}" data-a="shuffle" aria-pressed="${Music.shuffle}">${ic('shuffle')} Вперемешку</button><button class="btn grow ${Music.repeat ? 'primary' : ''}" data-a="repeat" aria-pressed="${Music.repeat}">${ic('repeat')} По кругу</button></div>
       ${L.map((t, i) => `<div class="track ${cur && cur.id === t.id ? 'cur' : ''}"><button class="ibtn" data-a="tplay" data-i="${i}" aria-label="Играть: ${esc(t.name)}">${ic(cur && cur.id === t.id && Music.playing ? 'pause' : 'play')}</button><div class="grow"><div class="n">${esc(t.name)}</div><div class="xs muted">${(t.size / 1048576).toFixed(1).replace('.', ',')} МБ</div></div><button class="ibtn" style="border:0;background:none" data-a="tdel" data-id="${t.id}" aria-label="Удалить: ${esc(t.name)}">${ic('trash')}</button></div>`).join('')}
@@ -192,14 +192,14 @@
       const nx = W.items[W.pend.i], nex = EX[nx.ex], newEx = W.pend.i !== W.i;
       o.innerHTML = `<div class="body" style="text-align:center"><div class="bar"><button class="ibtn" data-a="wexit" aria-label="Выйти">${ic('x')}</button><div class="prog">${prog}</div><span class="xs b">${W.i + 1}/${W.items.length}</span></div>
         <div class="eyebrow" style="margin-top:8px">Отдых</div>
-        <div class="ring"><svg viewBox="0 0 100 100"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0cd86"/><stop offset="1" stop-color="#c69a3f"/></linearGradient></defs><circle class="bg" cx="50" cy="50" r="44"/><circle class="fg" id="rfg" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="0"/></svg><div class="t"><span id="rt">0:00</span><small>секунд</small></div></div>
+        <div class="ring"><svg viewBox="0 0 100 100"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e3b968"/><stop offset="1" stop-color="#e3b968"/></linearGradient></defs><circle class="bg" cx="50" cy="50" r="44"/><circle class="fg" id="rfg" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="0"/></svg><div class="t"><span id="rt">0:00</span><small>секунд</small></div></div>
         <div class="card" style="text-align:left"><div class="eyebrow">${newEx ? 'Следующее упражнение' : 'Следующий подход'}</div><div class="row" style="margin-top:10px"><div class="thumbbox">${thumb(nex.id)}</div><div class="grow"><div class="b" style="line-height:1.25">${nex.name}</div><div class="sm muted">Подход ${W.pend.s + 1} из ${nx.sets} · ${/\d/.test(nx.reps) ? nx.reps + ' повт.' : nx.reps}</div></div></div></div>
         <div class="row" style="justify-content:center"><button class="btn" data-a="radd">+15 с</button><button class="btn primary" data-a="rskip">Пропустить отдых</button></div></div>
         <div class="foot">${wmusic()}</div>`;
       runRest();
     } else {
       const sets = W.sets, reps = sets.reduce((a, x) => a + x.r, 0), ton = sets.reduce((a, x) => a + x.w * x.r, 0), dur = Math.round((Date.now() - W.t0) / 60000);
-      o.innerHTML = `<div class="body" style="text-align:center"><div style="height:30px"></div><div class="ibtn" style="width:84px;height:84px;margin:0 auto 14px;background:linear-gradient(180deg,#48d6a2,#1f9d75);color:#042019;border:0"><svg class="i" style="width:44px;height:44px;stroke-width:2.6" viewBox="0 0 24 24">${ICON.check}</svg></div><h1 class="h1">Тренировка завершена</h1><p class="muted">День ${W.day} · ${PROG.DAYS[W.day].name}</p>
+      o.innerHTML = `<div class="body" style="text-align:center"><div style="height:30px"></div><div class="ibtn" style="width:84px;height:84px;margin:0 auto 14px;background:#3fc07a;color:#042019;border:0"><svg class="i" style="width:44px;height:44px;stroke-width:2.6" viewBox="0 0 24 24">${ICON.check}</svg></div><h1 class="h1">Тренировка завершена</h1><p class="muted">День ${W.day} · ${PROG.DAYS[W.day].name}</p>
         <div class="kpi" style="margin:18px 0"><div><b>${sets.length}</b><span>подходов</span></div><div><b>${reps}</b><span>повторов</span></div><div><b>${dur}</b><span>минут</span></div></div>
         ${ton ? `<div class="card"><div class="eyebrow">Тоннаж</div><div class="num" style="font-size:40px;margin-top:4px">${Math.round(ton)} кг</div></div>` : ''}<p class="sm muted">Теперь белок, вода и сон — мышцы растут в отдыхе.</p></div>
         <div class="foot"><button class="btn primary lg block" data-a="wdone">Готово</button></div>`;
