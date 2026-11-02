@@ -40,6 +40,7 @@
     await api('/gists/' + gistId, { method: 'PATCH', body: JSON.stringify({ files: { [FILE]: { content: JSON.stringify(payload) } } }) });
   }
 
+  const SKIP = { tab: 1, syncToken: 1, syncGist: 1, syncAt: 1 };
   function mergeData(L, R, lat, rat) {
     const newer = rat >= lat ? R : L, older = rat >= lat ? L : R, out = {};
     const logMap = {};
@@ -52,8 +53,8 @@
     out.snus = [...new Set([...(L.snus || []), ...(R.snus || [])])].sort((a, b) => a - b);
     out.last = Object.assign({}, older.last || {}, newer.last || {});
     ['start', 'snusInt'].forEach(k => { const v = newer[k] !== undefined ? newer[k] : older[k]; if (v !== undefined) out[k] = v; });
-    for (const k in newer) if (!(k in out)) out[k] = newer[k];
-    for (const k in older) if (!(k in out)) out[k] = older[k];
+    for (const k in newer) if (!(k in out) && !SKIP[k]) out[k] = newer[k];
+    for (const k in older) if (!(k in out) && !SKIP[k]) out[k] = older[k];
     return out;
   }
 
