@@ -27,6 +27,7 @@
     down: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'
   };
   const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
+  const VER = '14';
   const st = { tab: App.S.get('tab', 'today'), lib: 'Все', pw: null };
   const TABS = [['today', 'Сегодня'], ['plan', 'Программа'], ['lib', 'Упражнения'], ['music', 'Музыка'], ['stats', 'Прогресс']];
 
@@ -267,7 +268,8 @@
       <div class="card"><div class="eyebrow">Данные · бэкап</div>
         <p class="sm muted" style="margin:6px 0 12px">Ручной перенос, если синхронизация выключена. Музыка не входит — она хранится отдельно на каждом телефоне.</p>
         <div class="row" style="gap:10px"><button class="btn grow" data-a="bkpfile">${ic('down')} Сохранить файл</button><button class="btn grow" data-a="bkpcode">${ic('copy')} Код</button></div>
-        <button class="btn ghost block" style="margin-top:10px" data-a="bkprestore">Восстановить из кода или файла</button></div></div>`;
+        <button class="btn ghost block" style="margin-top:10px" data-a="bkprestore">Восстановить из кода или файла</button></div>
+      <p class="xs muted" style="text-align:center;margin:16px 0 0">Громила · версия ${VER}</p></div>`;
   }
 
   /* ============ ТРЕНИРОВКА ============ */
