@@ -42,6 +42,7 @@ nav#tabs button[aria-current=true]::after{content:"";position:absolute;top:5px;w
 .btn.red{background:var(--red);color:#1c0608;border:0}
 .btn.green{background:var(--green);color:#042019;border:0}
 .btn.ghost{background:transparent}
+.btn.on{background:var(--active);border-color:var(--line2);color:var(--accent)}
 .btn.block{width:100%}.btn.lg{min-height:58px;font-size:18px;border-radius:14px}
 .btn.sm{min-height:44px;padding:0 16px;font-size:14px;border-radius:10px}
 .ibtn{width:48px;height:48px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line2);background:var(--raised)}
