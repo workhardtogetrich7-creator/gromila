@@ -27,7 +27,7 @@
     down: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'
   };
   const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
-  const VER = '18';
+  const VER = '19';
   const st = { tab: App.S.get('tab', 'today'), lib: 'Все', pw: null };
   const TABS = [['today', 'Сегодня'], ['plan', 'Программа'], ['lib', 'Упражнения'], ['music', 'Музыка'], ['stats', 'Прогресс']];
 
@@ -137,12 +137,18 @@
   }
 
   /* ============ СЕГОДНЯ ============ */
+  function kegelCard() {
+    const today = App.iso(new Date()), d = PROG.DAYS.K;
+    const done = App.log().some(s => s.day === 'K' && s.date === today);
+    if (done) return `<div class="card row between"><div class="grow"><div class="eyebrow">Кегель · тазовое дно</div><div class="b" style="margin-top:4px">Сегодня сделано</div></div><span class="chip green">${ic('check')}</span></div>`;
+    return `<div class="card"><div class="eyebrow">Кегель · тазовое дно · каждый день</div><p class="sm muted" style="margin:6px 0 12px">5 упражнений лёжа, ~${d.mins} мин. Делай ежедневно — для контроля и потенции частота важнее всего.</p><button class="btn block" data-a="start" data-day="K">${ic('play')} Начать Кегель</button></div>`;
+  }
   function renderToday() {
     const now = new Date(), wk = App.week(now), ph = PROG.phaseOfWeek(wk), P = PROG.PHASES[ph];
     const iso = App.iso(now), log = App.log(), dayId = PROG.BY_DOW[now.getDay()];
-    const doneToday = log.filter(s => s.date === iso);
+    const doneToday = log.filter(s => s.date === iso && s.day !== 'K');
     const mon = App.mondayOf(now);
-    const week = DOW.map((n, i) => { const d = new Date(mon); d.setDate(d.getDate() + i); const id = PROG.BY_DOW[(i + 1) % 7]; const done = log.some(s => s.date === App.iso(d)); const today = App.iso(d) === iso;
+    const week = DOW.map((n, i) => { const d = new Date(mon); d.setDate(d.getDate() + i); const id = PROG.BY_DOW[(i + 1) % 7]; const done = log.some(s => s.date === App.iso(d) && s.day !== 'K'); const today = App.iso(d) === iso;
       return `<div class="d ${id ? 'plan' : ''} ${done ? 'done' : ''} ${today ? 'today' : ''}">${n}<i></i></div>`; }).join('');
     let hero;
     if (dayId && !doneToday.length) {
@@ -167,6 +173,7 @@
       ${hero}
       <div class="kpi" style="margin-bottom:14px"><div><b>${thisWeek}/3</b><span>на этой неделе</span></div><div><b>${total}</b><span>всего тренировок</span></div><div><b>${wk}</b><span>неделя с начала</span></div></div>
       ${musicCard}
+      ${kegelCard()}
       ${snusCard()}
       <div class="card"><div class="eyebrow">Выбрать другую</div><div class="row" style="margin-top:10px">${['A', 'B', 'C'].map(i => `<button class="btn sm grow" data-a="start" data-day="${i}">День ${i}</button>`).join('')}</div></div></div>`;
   }
@@ -175,7 +182,7 @@
   function renderPlan() {
     const wk = App.week(), cur = ((wk - 1) % 8) + 1, sel = st.pw || cur, ph = PROG.phaseOfWeek(sel), P = PROG.PHASES[ph];
     const weeks = [...Array(8)].map((_, i) => { const n = i + 1; return `<button class="wk ${n === cur ? 'cur' : n < cur ? 'past' : ''}" data-a="pw" data-w="${n}" aria-pressed="${n === sel}">${n}<small>нед.</small></button>`; }).join('');
-    const days = Object.values(PROG.DAYS).map(d => `<div class="card"><div class="row between"><div><div class="eyebrow">${d.dowName}</div><h2 style="margin-top:4px">День ${d.id} · ${d.name}</h2></div></div>
+    const days = Object.values(PROG.DAYS).filter(d => !d.daily).map(d => `<div class="card"><div class="row between"><div><div class="eyebrow">${d.dowName}</div><h2 style="margin-top:4px">День ${d.id} · ${d.name}</h2></div></div>
       <div style="margin:8px 0">${d.list.map(x => { const ex = EX[x.ex]; return `<button class="setrow" style="width:100%;background:none;border:0;border-bottom:1px solid var(--line);text-align:left" data-a="ex" data-id="${ex.id}"><div class="thumbbox" style="width:56px;height:54px">${thumb(ex.id)}</div><div class="grow"><div class="b" style="line-height:1.25">${ex.name}</div><div class="xs muted">${x.note || ex.group}</div></div><div style="text-align:right"><div class="num">${x.sets[ph]}×</div><div class="xs muted">${x.reps[ph]}</div></div></button>`; }).join('')}</div>
       <p class="xs muted" style="margin:0 0 12px">Разминка: ${d.warm}</p><button class="btn primary block" data-a="start" data-day="${d.id}">${ic('play')} Начать день ${d.id}</button></div>`).join('');
     return `<div class="page"><div class="top"><h1 class="h1">Программа</h1><span class="chip">8 недель · 3 дня</span></div>
@@ -269,7 +276,7 @@
       <div class="row between xs muted"><span>${fmt(pts[0].kg)} кг</span><span>${fmt(pts[pts.length - 1].kg)} кг</span></div>`;
   }
   function renderStats() {
-    const log = App.log(), body = App.body(), last = body[body.length - 1];
+    const log = App.log().filter(s => s.day !== 'K'), body = App.body(), last = body[body.length - 1];
     const prs = {}; log.forEach(s => s.sets.forEach(x => { const p = prs[x.ex]; if (!p || x.w > p.w || (x.w === p.w && x.r > p.r)) prs[x.ex] = { w: x.w, r: x.r }; }));
     const reps = log.reduce((a, s) => a + s.sets.reduce((b, x) => b + x.r, 0), 0);
     const hist = log.slice(-8).reverse();
