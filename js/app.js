@@ -27,7 +27,7 @@
     down: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'
   };
   const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
-  const VER = '15';
+  const VER = '16';
   const st = { tab: App.S.get('tab', 'today'), lib: 'Все', pw: null };
   const TABS = [['today', 'Сегодня'], ['plan', 'Программа'], ['lib', 'Упражнения'], ['music', 'Музыка'], ['stats', 'Прогресс']];
 
@@ -318,11 +318,15 @@
     const prog = W.items.map((_, k) => `<i class="${k < W.i ? 'on' : k === W.i ? 'cur' : ''}"></i>`).join('');
     if (W.mode === 'work') {
       const unit = ex.w === 0 ? 'доп. кг' : 'кг на гантель';
+      const last = App.last(ex.id), lw = last && last.w > 0;
+      const lastTxt = last ? (lw ? `${fmt(last.w)} кг × ${last.r}` : `${last.r} повт`) : 'первый раз';
+      const goalTxt = last ? (lw ? `${last.r + 1} повт · или ${fmt(last.w + 0.5)} кг` : `${last.r + 1} повт`) : 'задай рабочий вес';
       o.innerHTML = `<div class="body"><div class="bar"><button class="ibtn" data-a="wexit" aria-label="Выйти">${ic('x')}</button><div class="prog">${prog}</div><span class="xs b">${W.i + 1}/${W.items.length}</span></div>
         <div class="stage" id="wstage" data-a="figtoggle"><div class="name">${ex.name}</div></div>
         <div class="chips" style="margin-top:10px;flex-wrap:wrap">${ex.mus.map(m => `<span class="chip red">${m}</span>`).join('')}</div>
         <div class="card" style="margin-bottom:10px"><div class="row between"><div><div class="tag">Подход</div><div class="num">${W.s + 1} / ${it.sets}</div></div><div><div class="tag">Повторов</div><div class="num">${it.reps}</div></div><div><div class="tag">Темп</div><div class="num">${P.tempo}</div></div></div>
-          <p class="xs muted" style="margin:10px 0 0">${tempoText(P.tempo)}${it.note ? ' · ' + it.note : ''}</p></div>
+          <p class="xs muted" style="margin:10px 0 0">${tempoText(P.tempo)}${it.note ? ' · ' + it.note : ''}</p>
+          <div class="row between" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><div><div class="tag">Прошлый раз</div><div class="b">${lastTxt}</div></div><div style="text-align:right"><div class="tag">Побей</div><div class="b" style="color:var(--accent)">${goalTxt}</div></div></div></div>
         <div class="two"><div class="stepper"><button data-a="wstep" data-k="w" data-d="-0.5" aria-label="Меньше веса">−</button><div class="v"><b id="vw">${fmt(W.w)}</b><span>${unit}</span></div><button data-a="wstep" data-k="w" data-d="0.5" aria-label="Больше веса">+</button></div>
         <div class="stepper"><button data-a="wstep" data-k="r" data-d="-1" aria-label="Меньше повторов">−</button><div class="v"><b id="vr">${W.r}</b><span>повторов</span></div><button data-a="wstep" data-k="r" data-d="1" aria-label="Больше повторов">+</button></div></div></div>
         <div class="foot"><button class="btn primary lg block" data-a="setdone">${ic('check')} Подход выполнен</button><div class="row" style="margin-top:8px"><button class="btn sm" data-a="tech" data-id="${ex.id}">${ic('info')} Техника</button><button class="btn sm ghost" data-a="wskip">Пропустить</button>${Music.list.length ? '<div class="grow"></div>' : ''}</div>${Music.list.length ? `<div style="margin-top:8px">${wmusic()}</div>` : ''}</div>`;
