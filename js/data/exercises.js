@@ -252,8 +252,18 @@
     fig: { env: [], mus: ['abs'], trail: 'head', pose: p => ({ hip: [190, 247], foot: [236, F], torso: M(-90, -128, p), handHead: true, ed: 1, farArm: 'none' }) }
   });
 
+  add('kegel', {
+    name: 'Упражнение Кегеля', group: 'Пресс', mus: ['Мышцы тазового дна'], w: 0,
+    eq: 'Без инвентаря — где угодно',
+    steps: ['Сядь или встань расслабленно, дыши ровно, живот и ягодицы не напрягай.', 'Напряги мышцы тазового дна — будто останавливаешь струю и подтягиваешь всё «вверх и внутрь».', 'Держи напряжение 5 секунд, не задерживая дыхание.', 'Полностью расслабься на 5 секунд, затем повтори.'],
+    mistakes: ['Напрягаешь ягодицы, живот или бёдра вместо тазового дна.', 'Задерживаешь дыхание.', 'Не расслабляешь мышцы полностью между повторами.'],
+    tempo: '5-0-5', breath: 'Дыши ровно, без задержки.',
+    tip: 'Можно делать незаметно где угодно. Для контроля и здоровья тазового дна — 2–3 подхода по 10–15 раз в день.',
+    fig: { env: [], mus: ['glutes'], period: 4000, pose: p => ({ ...ST, hip: [150, M(164, 159, p)], uarm: 0, farm: 0, farArm: 'none' }) }
+  });
+
   /* ---------------- порядок для библиотеки ---------------- */
-  const ORDER = ['dips', 'pushup', 'closepush', 'floorpress', 'ohpress', 'lateral', 'reardelt', 'skull', 'pullup', 'chinup', 'row1', 'barrow', 'pullover', 'shrug', 'curl', 'hammer', 'zottman', 'conc', 'bulgarian', 'goblet', 'rdl1', 'bridge', 'calf', 'legraise', 'crunch'];
+  const ORDER = ['dips', 'pushup', 'closepush', 'floorpress', 'ohpress', 'lateral', 'reardelt', 'skull', 'pullup', 'chinup', 'row1', 'barrow', 'pullover', 'shrug', 'curl', 'hammer', 'zottman', 'conc', 'bulgarian', 'goblet', 'rdl1', 'bridge', 'calf', 'legraise', 'crunch', 'kegel'];
   window.EX = E;
   window.EX_ORDER = ORDER;
   window.EX_GROUPS = ['Все', 'Грудь', 'Спина', 'Плечи', 'Руки', 'Ноги', 'Пресс'];
