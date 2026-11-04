@@ -27,7 +27,7 @@
     down: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'
   };
   const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
-  const VER = '19';
+  const VER = '20';
   const st = { tab: App.S.get('tab', 'today'), lib: 'Все', pw: null };
   const TABS = [['today', 'Сегодня'], ['plan', 'Программа'], ['lib', 'Упражнения'], ['music', 'Музыка'], ['stats', 'Прогресс']];
 
@@ -35,6 +35,7 @@
   const thumb = id => thumbCache[id] || (thumbCache[id] = Fig.thumb(EX[id], 1).outerHTML);
   const tempoText = t => { const [a, b, c] = t.split('-'); return `Опускание ${a} с · пауза ${b} с · подъём ${c} с`; };
   const toast = msg => { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); };
+  const oneDB = () => App.S.get('onedb', false);
 
   /* ============ СНЮС ============ */
   const fmtH = h => String(h).replace('.', ',');
@@ -154,7 +155,7 @@
     if (dayId && !doneToday.length) {
       const d = PROG.DAYS[dayId], sets = d.list.reduce((a, x) => a + x.sets[ph], 0);
       hero = `<div class="card glow"><div class="eyebrow">Сегодня · ${d.dowName}</div><h1 class="h1" style="margin:6px 0 4px">День ${d.id}</h1><div class="b" style="font-size:19px">${d.name}</div>
-        <div class="row wrap" style="margin:14px 0"><span class="chip">${d.list.length} упражнений</span><span class="chip">${sets} подходов</span><span class="chip">~${d.mins} мин</span></div>
+        <div class="row wrap" style="margin:14px 0"><span class="chip">${d.list.length} упражнений</span><span class="chip">${sets} подходов</span><span class="chip">~${d.mins} мин</span>${oneDB() ? '<span class="chip">1 гантель</span>' : ''}</div>
         <button class="btn primary lg block" data-a="start" data-day="${d.id}">${ic('play')} Начать тренировку</button></div>
         <div class="card"><div class="eyebrow">Разминка · 5 минут</div><p class="sm" style="margin:8px 0 0">${d.warm}</p></div>`;
     } else if (dayId) {
@@ -190,7 +191,10 @@
       <div class="card glow"><div class="eyebrow">Недели ${P.weeks}</div><h2 style="margin:4px 0 8px;font-size:26px">${P.name}</h2><div class="row wrap" style="margin-bottom:10px"><span class="chip">Темп ${P.tempo}</span><span class="chip">${P.rpe}</span></div><p class="sm" style="margin:0">${P.tech}</p></div>
       ${days}
       <div class="card"><div class="eyebrow">Как читать темп «3-1-1»</div><p class="sm" style="margin:8px 0 0">Первая цифра — секунды на <b>опускание</b>, вторая — <b>пауза</b> в растянутой точке, третья — <b>подъём</b>. На лёгких гантелях именно медленное опускание и паузы делают нагрузку тяжёлой для мышц.</p></div>
-      <div class="card"><div class="eyebrow">Твои гантели</div><p class="sm" style="margin:8px 0 0"><b>Гантель ≈ 7,5 кг:</b> на гриф 35 см — по 2 диска 2 кг и 2 диска 1,5 кг + фиксаторы.<br><b>Одна гантель ≈ 15 кг</b> (для тяги, приседа, моста): все диски на один гриф.<br><b>Штанга ≈ 15 кг:</b> оба грифа на переходник 40 см, диски по краям.</p></div>
+      <div class="card"><div class="row between" style="margin-bottom:4px"><span class="eyebrow">Твои гантели</span><button class="btn sm ${oneDB() ? 'on' : ''}" data-a="onedb" aria-pressed="${oneDB()}" style="min-height:34px;padding:0 14px;flex:none">Одна гантель</button></div>
+        ${oneDB()
+          ? `<p class="sm" style="margin:8px 0 0"><b>Режим «одна гантель» включён.</b> В каждой тренировке под упражнением появляется подсказка, как сделать его одной гантелью, а стартовый вес ограничен 9 кг (4+3+2). Турник и брусья используем как обычно. Выключи, когда вернётся второй снаряд.</p>`
+          : `<p class="sm" style="margin:8px 0 0"><b>Гантель ≈ 7,5 кг:</b> на гриф 35 см — по 2 диска 2 кг и 2 диска 1,5 кг + фиксаторы.<br><b>Одна гантель ≈ 15 кг</b> (для тяги, приседа, моста): все диски на один гриф.<br><b>Штанга ≈ 15 кг:</b> оба грифа на переходник 40 см, диски по краям.<br><span class="muted">Временно одна гантель? Жми «Одна гантель» наверху — покажу замены для всех упражнений.</span></p>`}</div>
       <div class="card"><div class="eyebrow">Рост силы</div><p class="sm" style="margin:8px 0 0">Вес 7,5 кг для 3 лет стажа — лёгкий, поэтому прогрессия идёт за счёт <b>повторов, темпа, пауз, отказа и дроп-сетов</b>. Когда на 15–20 повторов всё станет легко — добавь рюкзак с грузом, бутылки с водой или докупи диски.</p></div>
       <div class="card"><div class="eyebrow">Питание на массу (72 кг)</div><div class="kpi" style="margin:10px 0"><div><b>3000</b><span>ккал в день</span></div><div><b>150</b><span>г белка</span></div><div><b>+0,4</b><span>кг в неделю</span></div></div>
         <p class="sm" style="margin:0 0 6px"><b>Белок</b> (в каждый приём): курица, индейка, говядина, яйца целиком, творог, греческий йогурт, скумбрия, лосось, тунец, протеин.</p>
@@ -221,7 +225,8 @@
       <h3 style="font-size:18px;margin:10px 0 4px;color:var(--cyan)">Как делать</h3><ol>${e.steps.map(s => `<li>${s}</li>`).join('')}</ol>
       <h3 style="font-size:18px;margin:10px 0 4px;color:var(--red)">Частые ошибки</h3><ul>${e.mistakes.map(s => `<li>${s}</li>`).join('')}</ul>
       <div class="row wrap" style="margin-bottom:10px"><span class="chip">Темп ${e.tempo}</span><span class="chip">${e.breath}</span></div><p class="sm muted" style="margin:0 0 6px">${tempoText(e.tempo)}</p>
-      <div class="card" style="margin:12px 0 0;background:var(--raised)"><div class="eyebrow">Совет</div><p class="sm" style="margin:6px 0 0">${e.tip}</p></div>`;
+      <div class="card" style="margin:12px 0 0;background:var(--raised)"><div class="eyebrow">Совет</div><p class="sm" style="margin:6px 0 0">${e.tip}</p></div>
+      ${oneDB() && e.one ? `<div class="card" style="margin:12px 0 0;background:var(--raised);border:1px solid var(--accent)"><div class="eyebrow" style="color:var(--accent)">Одной гантелью</div><p class="sm" style="margin:6px 0 0">${e.one}</p></div>` : ''}`;
   }
 
   let exFig = null;
@@ -304,6 +309,7 @@
   function setInputs() {
     const it = W.items[W.i], ex = EX[it.ex], last = App.last(ex.id);
     W.w = last ? last.w : ex.w; W.r = last ? last.r : (parseInt(it.reps) || 10);
+    if (oneDB() && !last && W.w > 9) W.w = 9;
   }
   function startWorkout(dayId) {
     const wk = App.week(), ph = PROG.phaseOfWeek(wk), d = PROG.DAYS[dayId];
@@ -333,6 +339,7 @@
         <div class="chips" style="margin-top:10px;flex-wrap:wrap">${ex.mus.map(m => `<span class="chip red">${m}</span>`).join('')}</div>
         <div class="card" style="margin-bottom:10px"><div class="row between"><div><div class="tag">Подход</div><div class="num">${W.s + 1} / ${it.sets}</div></div><div><div class="tag">Повторов</div><div class="num">${it.reps}</div></div><div><div class="tag">Темп</div><div class="num">${P.tempo}</div></div></div>
           <p class="xs muted" style="margin:10px 0 0">${tempoText(P.tempo)}${it.note ? ' · ' + it.note : ''}</p>
+          ${oneDB() && ex.one ? `<div class="row" style="margin-top:10px;padding:8px 10px;background:var(--raised);border-radius:10px;gap:8px;align-items:flex-start"><span class="chip" style="flex:none">1 гантель</span><span class="xs" style="line-height:1.4">${ex.one}</span></div>` : ''}
           <div class="row between" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><div><div class="tag">Прошлый раз</div><div class="b">${lastTxt}</div></div><div style="text-align:right"><div class="tag">Побей</div><div class="b" style="color:var(--accent)">${goalTxt}</div></div></div></div>
         <div class="two"><div class="stepper"><button data-a="wstep" data-k="w" data-d="-0.5" aria-label="Меньше веса">−</button><div class="v"><b id="vw">${fmt(W.w)}</b><span>${unit}</span></div><button data-a="wstep" data-k="w" data-d="0.5" aria-label="Больше веса">+</button></div>
         <div class="stepper"><button data-a="wstep" data-k="r" data-d="-1" aria-label="Меньше повторов">−</button><div class="v"><b id="vr">${W.r}</b><span>повторов</span></div><button data-a="wstep" data-k="r" data-d="1" aria-label="Больше повторов">+</button></div></div></div>
@@ -415,7 +422,8 @@
     syncconn: async t => { const el = $('#synctok'), tok = el ? el.value : ''; if (!tok.trim()) { toast('Вставь токен'); return; } t.disabled = true; t.textContent = 'Подключаю…'; const r = await Sync.connect(tok); if (r.ok) { const sh = document.querySelector('.sheet'); if (sh) sh.remove(); render(); toast(r.warn ? 'Подключено, но: ' + r.warn : 'Синхронизация включена'); } else { t.disabled = false; t.textContent = 'Подключить'; toast(r.error || 'Не удалось подключить'); } },
     syncnow: async () => { toast('Синхронизирую…'); await Sync.sync(); render(); },
     syncoff: () => { if (confirm('Отключить синхронизацию на этом устройстве? Данные останутся в приложении.')) { Sync.disconnect(); render(); toast('Синхронизация отключена'); } },
-    hist: t => { const id = +t.dataset.id, s = App.log().find(x => x.id === id); if (s) sheet(histSheet(s)); }
+    hist: t => { const id = +t.dataset.id, s = App.log().find(x => x.id === id); if (s) sheet(histSheet(s)); },
+    onedb: () => { const v = !oneDB(); App.S.set('onedb', v); if (window.Sync) Sync.kick(); render(); toast(v ? 'Режим «одна гантель» включён' : 'Обычный режим'); }
   };
   document.addEventListener('click', e => { const t = e.target.closest('[data-a]'); if (!t) return; const f = A[t.dataset.a]; if (f) { e.preventDefault(); f(t, e); } });
   document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role=button],label.btn')) { e.preventDefault(); e.target.click(); } });
