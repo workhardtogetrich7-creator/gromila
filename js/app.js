@@ -27,7 +27,7 @@
     down: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'
   };
   const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
-  const VER = '22';
+  const VER = '23';
   const st = { tab: App.S.get('tab', 'today'), lib: 'Все', pw: null };
   const TABS = [['today', 'Сегодня'], ['plan', 'Программа'], ['lib', 'Упражнения'], ['music', 'Музыка'], ['stats', 'Прогресс']];
 
@@ -288,6 +288,28 @@
     return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;margin-top:10px" role="img" aria-label="График веса тела"><polyline points="${xy.map(p => p.join(',')).join(' ')}" fill="none" stroke="#e3b968" stroke-width="2.5" stroke-linejoin="round" style=""/>${xy.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="#0a0a0b" stroke="#e3b968" stroke-width="2"/>`).join('')}</svg>
       <div class="row between xs muted"><span>${fmt(pts[0].kg)} кг</span><span>${fmt(pts[pts.length - 1].kg)} кг</span></div>`;
   }
+  function gainBlock(body) {
+    const RATE = 0.25; // кг/нед — сухой набор
+    if (!body.length) {
+      return `<div class="card" style="margin:12px 0 0;background:var(--raised)"><div class="eyebrow">Цель · сухой набор</div><p class="sm" style="margin:6px 0 0">Запиши вес — поставлю цель <b style="color:#fff">+0,25 кг в неделю</b> и покажу, на пути ли ты. Взвешивайся раз в неделю утром натощак.</p></div>`;
+    }
+    const first = body[0], lastB = body[body.length - 1];
+    const weeks = (App.parse(lastB.d) - App.parse(first.d)) / 6048e5;
+    const gained = lastB.kg - first.kg, target = RATE * weeks, expected = first.kg + target;
+    let status, cls, tip;
+    if (weeks < 1) {
+      status = 'Собираю данные'; cls = ''; tip = 'Взвешивайся раз в неделю утром натощак — через неделю покажу темп набора.';
+    } else {
+      const diff = gained - target;
+      if (diff < -0.3) { status = 'Отстаёшь'; cls = 'red'; tip = 'Набор медленный. Добавь ~250 ккал в день — проще всего смузи (молоко + банан + овсянка + арахисовая паста + протеин, ~700 ккал).'; }
+      else if (diff > 0.5) { status = 'Быстро'; cls = ''; tip = 'Для сухого набора чуть быстро — убавь ~200 ккал, чтобы меньше заливало жиром.'; }
+      else { status = 'На пути'; cls = 'green'; tip = 'Темп ровно в цель — так и держи. Белок 110–135 г, сон 8 ч.'; }
+    }
+    return `<div class="card" style="margin:12px 0 0;background:var(--raised)">
+      <div class="row between" style="margin-bottom:8px"><span class="eyebrow">Цель · сухой набор +0,25 кг/нед</span><span class="chip ${cls}">${status}</span></div>
+      <div class="kpi"><div><b>${fmt(first.kg)}</b><span>старт, кг</span></div><div><b>${gained >= 0 ? '+' : ''}${fmt(gained)}</b><span>набрал, кг</span></div><div><b>${weeks >= 1 ? fmt(expected) : '—'}</b><span>цель к дате</span></div></div>
+      <p class="sm" style="margin:10px 0 0">${tip}</p></div>`;
+  }
   function renderStats() {
     const log = App.log().filter(s => s.day !== 'K' && s.day !== 'R'), body = App.body(), last = body[body.length - 1];
     const prs = {}; log.forEach(s => s.sets.forEach(x => { const p = prs[x.ex]; if (!p || x.w > p.w || (x.w === p.w && x.r > p.r)) prs[x.ex] = { w: x.w, r: x.r }; }));
@@ -296,7 +318,7 @@
     return `<div class="page"><div class="top"><h1 class="h1">Прогресс</h1><span class="chip">180 см</span></div>
       <div class="kpi" style="margin-bottom:14px"><div><b>${log.length}</b><span>тренировок</span></div><div><b>${log.reduce((a, s) => a + s.sets.length, 0)}</b><span>подходов</span></div><div><b>${reps}</b><span>повторов</span></div></div>
       <div class="card"><div class="row between"><div><div class="eyebrow">Вес тела</div><div class="num" style="margin-top:4px;font-size:34px">${last ? fmt(last.kg) + ' кг' : '72 кг'}</div></div></div>
-        <div class="row" style="margin-top:12px"><input id="bw" type="number" inputmode="decimal" step="0.1" min="30" max="200" placeholder="Сегодня, кг" aria-label="Вес тела, кг"><button class="btn primary" data-a="bw" style="flex:none">Записать</button></div>${chart(body)}</div>
+        <div class="row" style="margin-top:12px"><input id="bw" type="number" inputmode="decimal" step="0.1" min="30" max="200" placeholder="Сегодня, кг" aria-label="Вес тела, кг"><button class="btn primary" data-a="bw" style="flex:none">Записать</button></div>${chart(body)}${gainBlock(body)}</div>
       <div class="card"><div class="eyebrow">Рекорды</div>${Object.keys(prs).length ? Object.keys(prs).map(id => `<div class="setrow"><div class="grow b">${EX[id].name}</div><div class="num">${prs[id].w ? fmt(prs[id].w) + ' кг × ' + prs[id].r : prs[id].r + ' повт.'}</div></div>`).join('') : '<p class="sm muted" style="margin:8px 0 0">Пока пусто — первая тренировка всё заполнит.</p>'}</div>
       <div class="card"><div class="eyebrow">История</div>${hist.length ? hist.map(s => `<button class="setrow" data-a="hist" data-id="${s.id}" style="width:100%;background:none;border:0;border-bottom:1px solid var(--line);text-align:left"><div class="grow"><div class="b">День ${s.day} · ${PROG.DAYS[s.day] ? PROG.DAYS[s.day].name : ''}</div><div class="xs muted">${App.parse(s.date).toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' })} · ${Math.round(s.dur / 60)} мин</div></div><span class="chip">${s.sets.length} подх.</span>${ic('chev')}</button>`).join('') : '<p class="sm muted" style="margin:8px 0 0">Тренировок пока нет.</p>'}<p class="xs muted" style="margin:8px 0 0">Нажми на тренировку — покажу, что сделал и что пропустил.</p></div>
       <div class="card"><div class="eyebrow">Старт программы</div><p class="sm muted" style="margin:6px 0 10px">Сейчас идёт неделя ${App.week()}. Дата начала — понедельник первой недели.</p><div class="row"><input id="sd" type="date" value="${App.startDate()}" aria-label="Дата начала программы"><button class="btn" data-a="sdset" style="flex:none">Сохранить</button></div><button class="btn ghost block" style="margin-top:10px" data-a="sdnow">Начать цикл с этой недели</button></div>
