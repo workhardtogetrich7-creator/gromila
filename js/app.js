@@ -27,7 +27,7 @@
     down: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'
   };
   const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
-  const VER = '20';
+  const VER = '21';
   const st = { tab: App.S.get('tab', 'today'), lib: 'Все', pw: null };
   const TABS = [['today', 'Сегодня'], ['plan', 'Программа'], ['lib', 'Упражнения'], ['music', 'Музыка'], ['stats', 'Прогресс']];
 
@@ -156,7 +156,8 @@
       const d = PROG.DAYS[dayId], sets = d.list.reduce((a, x) => a + x.sets[ph], 0);
       hero = `<div class="card glow"><div class="eyebrow">Сегодня · ${d.dowName}</div><h1 class="h1" style="margin:6px 0 4px">День ${d.id}</h1><div class="b" style="font-size:19px">${d.name}</div>
         <div class="row wrap" style="margin:14px 0"><span class="chip">${d.list.length} упражнений</span><span class="chip">${sets} подходов</span><span class="chip">~${d.mins} мин</span>${oneDB() ? '<span class="chip">1 гантель</span>' : ''}</div>
-        <button class="btn primary lg block" data-a="start" data-day="${d.id}">${ic('play')} Начать тренировку</button></div>
+        <button class="btn primary lg block" data-a="start" data-day="${d.id}">${ic('play')} Начать тренировку</button>
+        <button class="btn ghost block" style="margin-top:8px" data-a="logday" data-day="${d.id}">Уже тренировался — отметить сделанным</button></div>
         <div class="card"><div class="eyebrow">Разминка · 5 минут</div><p class="sm" style="margin:8px 0 0">${d.warm}</p></div>`;
     } else if (dayId) {
       hero = `<div class="card glow"><div class="eyebrow">Сегодня</div><h1 class="h1" style="margin:6px 0">Тренировка выполнена</h1><p class="muted" style="margin:0 0 14px">Отличная работа. Теперь еда и сон — именно тогда мышцы растут.</p><div class="row"><span class="chip green">${ic('check')} День ${doneToday[0].day}</span><span class="chip">${doneToday[0].sets.length} подходов</span></div></div>`;
@@ -356,10 +357,16 @@
       runRest();
     } else {
       const sets = W.sets, reps = sets.reduce((a, x) => a + x.r, 0), ton = sets.reduce((a, x) => a + x.w * x.r, 0), dur = Math.round((Date.now() - W.t0) / 60000);
+      if (!sets.length) {
+        o.innerHTML = `<div class="body" style="text-align:center"><div style="height:30px"></div><div class="ibtn" style="width:84px;height:84px;margin:0 auto 14px;background:var(--active);color:var(--accent);border:0"><svg class="i" style="width:44px;height:44px;stroke-width:2.6" viewBox="0 0 24 24">${ICON.info}</svg></div><h1 class="h1">Ничего не записано</h1><p class="muted" style="margin:6px 0 0">Ты не отметил ни одного подхода. В тренировке после каждого подхода жми <b style="color:#fff">«Подход выполнен»</b> — тогда он попадёт в итоги.</p>
+        <div class="card" style="text-align:left;margin-top:16px"><p class="sm" style="margin:0">Если ты всё же отзанимался — запиши День ${W.day} сделанным, и он появится в итогах (с плановыми подходами).</p></div></div>
+        <div class="foot"><button class="btn primary lg block" data-a="logday" data-day="${W.day}">${ic('check')} Записать как сделано</button><button class="btn ghost block" style="margin-top:8px" data-a="wdone">Не записывать</button></div>`;
+      } else {
       o.innerHTML = `<div class="body" style="text-align:center"><div style="height:30px"></div><div class="ibtn" style="width:84px;height:84px;margin:0 auto 14px;background:#3fc07a;color:#042019;border:0"><svg class="i" style="width:44px;height:44px;stroke-width:2.6" viewBox="0 0 24 24">${ICON.check}</svg></div><h1 class="h1">Тренировка завершена</h1><p class="muted">День ${W.day} · ${PROG.DAYS[W.day].name}</p>
         <div class="kpi" style="margin:18px 0"><div><b>${sets.length}</b><span>подходов</span></div><div><b>${reps}</b><span>повторов</span></div><div><b>${dur}</b><span>минут</span></div></div>
         ${ton ? `<div class="card"><div class="eyebrow">Тоннаж</div><div class="num" style="font-size:40px;margin-top:4px">${Math.round(ton)} кг</div></div>` : ''}<p class="sm muted">Теперь белок, вода и сон — мышцы растут в отдыхе.</p></div>
         <div class="foot"><button class="btn primary lg block" data-a="wdone">Готово</button></div>`;
+      }
     }
   }
 
@@ -384,6 +391,12 @@
   }
   function finish() { W.mode = 'done'; clearTmr(); stopFig(); if (W.sets.length) save(); renderW(); }
   function save() { const n = new Date(); App.addSession({ id: n.getTime(), date: App.iso(n), day: W.day, week: W.wk, ph: W.ph, dur: Math.round((Date.now() - W.t0) / 1000), sets: W.sets }); W.saved = true; }
+  /* Записать день «как сделано» из плана — для случая, когда занимался, но не отмечал подходы */
+  function logDayDone(dayId) {
+    const wk = App.week(), ph = PROG.phaseOfWeek(wk), d = PROG.DAYS[dayId], now = new Date(), sets = [];
+    d.list.forEach(x => { const n = x.sets[ph], last = App.last(x.ex), r0 = parseInt(x.reps[ph]) || 10; for (let i = 0; i < n; i++) sets.push({ ex: x.ex, w: last ? last.w : (EX[x.ex].w || 0), r: last ? last.r : r0, n: i + 1 }); });
+    App.addSession({ id: now.getTime(), date: App.iso(now), day: dayId, week: wk, ph, dur: d.mins * 60, sets });
+  }
   function closeW() { clearTmr(); stopFig(); const o = $('#wov'); if (o) o.remove(); if (wake) { wake.release().catch(() => {}); wake = null; } W = null; render(); }
 
   function sheet(html) { const s = document.createElement('div'); s.className = 'sheet'; s.innerHTML = `<div class="p" role="dialog" aria-modal="true">${html}</div>`; s.addEventListener('click', e => { if (e.target === s) s.remove(); }); layer.appendChild(s); return s; }
@@ -423,7 +436,8 @@
     syncnow: async () => { toast('Синхронизирую…'); await Sync.sync(); render(); },
     syncoff: () => { if (confirm('Отключить синхронизацию на этом устройстве? Данные останутся в приложении.')) { Sync.disconnect(); render(); toast('Синхронизация отключена'); } },
     hist: t => { const id = +t.dataset.id, s = App.log().find(x => x.id === id); if (s) sheet(histSheet(s)); },
-    onedb: () => { const v = !oneDB(); App.S.set('onedb', v); if (window.Sync) Sync.kick(); render(); toast(v ? 'Режим «одна гантель» включён' : 'Обычный режим'); }
+    onedb: () => { const v = !oneDB(); App.S.set('onedb', v); if (window.Sync) Sync.kick(); render(); toast(v ? 'Режим «одна гантель» включён' : 'Обычный режим'); },
+    logday: t => { const day = t.dataset.day; if (W) { logDayDone(day); closeW(); go('stats'); toast('Тренировка записана в итоги'); } else if (confirm(`Отметить День ${day} сделанным? Он попадёт в итоги с плановыми подходами.`)) { logDayDone(day); render(); toast('Тренировка записана в итоги'); } }
   };
   document.addEventListener('click', e => { const t = e.target.closest('[data-a]'); if (!t) return; const f = A[t.dataset.a]; if (f) { e.preventDefault(); f(t, e); } });
   document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role=button],label.btn')) { e.preventDefault(); e.target.click(); } });
