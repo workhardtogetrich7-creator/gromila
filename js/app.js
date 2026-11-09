@@ -27,7 +27,7 @@
     down: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'
   };
   const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
-  const VER = '26';
+  const VER = '27';
   const st = { tab: App.S.get('tab', 'today'), lib: 'Все', pw: null };
   const TABS = [['today', 'Сегодня'], ['plan', 'Программа'], ['lib', 'Упражнения'], ['music', 'Музыка'], ['stats', 'Прогресс']];
 
@@ -290,19 +290,34 @@
   }
   function gainBlock(body) {
     const RATE = 0.25; // кг/нед — сухой набор
-    const GOAL = 80;   // силуэт Бэйла: рост ~180 см, сухой ~11%, FFMI ~22
+    // Две ступени-ачивки под рост 180 см (сухой): Бейтман 74 → Бэтмен 80
+    const STAGES = [
+      { icon: '🔪', name: 'Патрик Бейтман', kg: 74, tag: 'рельеф + база' },
+      { icon: '🦇', name: 'Бэтмен (Бэйл)', kg: 80, tag: 'масса и ширина спины/плеч' }
+    ];
     if (!body.length) {
-      return `<div class="card glow" style="margin:12px 0 0"><div class="eyebrow">🦇 Цель · силуэт Бэйла — ${GOAL} кг</div><p class="sm" style="margin:6px 0 0">Запиши вес — покажу путь к ${GOAL} кг сухой массы и темп <b style="color:#fff">+0,25 кг в неделю</b>. Взвешивайся раз в неделю утром натощак.</p></div>`;
+      const srows = STAGES.map(s => `<div class="row between" style="margin-top:10px"><div><div class="b">${s.icon} ${s.name}</div><div class="xs muted">${s.tag} · ${s.kg} кг</div></div><span class="num muted" style="font-size:20px">${s.kg} кг</span></div>`).join('');
+      return `<div class="card glow" style="margin:12px 0 0"><div class="eyebrow">🎯 Цель · две ступени</div>${srows}<p class="sm muted" style="margin:10px 0 0">Запиши вес — поведу к первой ступени темпом <b style="color:#fff">+0,25 кг/нед</b>. Взвешивайся раз в неделю утром натощак.</p></div>`;
     }
-    const first = body[0], lastB = body[body.length - 1];
-    const cur = lastB.kg, remain = Math.max(0, GOAL - cur), base = Math.min(first.kg, cur);
-    const pct = Math.max(0, Math.min(100, (GOAL - base) > 0 ? (cur - base) / (GOAL - base) * 100 : 100));
-    const months = remain > 0 ? Math.round(remain / RATE / 4.345) : 0, reached = remain <= 0.5;
-    const goalCard = `<div class="card glow" style="margin:12px 0 0">
-      <div class="row between"><span class="eyebrow">🦇 Цель · силуэт Бэйла</span><span class="num" style="color:var(--accent)">${GOAL}<span class="sm muted" style="font-family:var(--body)"> кг</span></span></div>
-      <div style="height:8px;border-radius:99px;background:var(--active);overflow:hidden;margin:12px 0 8px"><div style="height:100%;width:${pct}%;background:var(--accent)"></div></div>
-      <div class="row between sm"><span class="muted">${fmt(cur)} кг сейчас</span><span class="b" style="color:var(--accent)">${reached ? 'Цель взята! 🔥' : 'осталось +' + fmt(remain) + ' кг'}</span></div>
-      ${reached ? '' : `<p class="sm muted" style="margin:10px 0 0">~${months} мес ровным темпом +0,25 кг/нед. Приоритет — плечи и ширина спины: именно они дают V-силуэт Бэтмена.</p>`}</div>`;
+    const first = body[0], lastB = body[body.length - 1], cur = lastB.kg;
+    const activeIdx = STAGES.findIndex(s => cur < s.kg); // -1 => обе взяты
+    const srows = STAGES.map((s, i) => {
+      const done = cur >= s.kg, active = i === activeIdx;
+      const right = done ? '<span class="chip green">взято ✓</span>'
+        : active ? `<span class="num" style="color:var(--accent)">${s.kg}<span class="sm muted" style="font-family:var(--body)"> кг</span></span>`
+        : `<span class="num muted" style="font-size:20px">${s.kg} кг</span>`;
+      let block = `<div class="row between" style="margin-top:${i ? 14 : 12}px"><div><div class="b${active || done ? '' : ' muted'}">${s.icon} ${s.name}</div><div class="xs muted">${s.tag} · ${s.kg} кг</div></div>${right}</div>`;
+      if (active) {
+        const segStart = i > 0 ? STAGES[i - 1].kg : Math.min(first.kg, cur);
+        const span = s.kg - segStart, pct = Math.max(0, Math.min(100, span > 0 ? (cur - segStart) / span * 100 : 0));
+        const remain = Math.max(0, s.kg - cur), months = Math.round(remain / RATE / 4.345);
+        block += `<div style="height:8px;border-radius:99px;background:var(--active);overflow:hidden;margin:10px 0 8px"><div style="height:100%;width:${pct}%;background:var(--accent)"></div></div>
+          <div class="row between sm"><span class="muted">${fmt(cur)} кг сейчас</span><span class="b" style="color:var(--accent)">осталось +${fmt(remain)} кг</span></div>
+          <p class="sm muted" style="margin:8px 0 0">~${months} мес темпом +0,25 кг/нед · ${s.tag}</p>`;
+      }
+      return block;
+    }).join('');
+    const goalCard = `<div class="card glow" style="margin:12px 0 0"><div class="row between"><span class="eyebrow">🎯 Цель · две ступени</span>${activeIdx === -1 ? '<span class="chip green">обе взяты 🔥</span>' : ''}</div>${srows}</div>`;
     const weeks = (App.parse(lastB.d) - App.parse(first.d)) / 6048e5;
     const gained = lastB.kg - first.kg, target = RATE * weeks, expected = first.kg + target;
     let status, cls, tip;
