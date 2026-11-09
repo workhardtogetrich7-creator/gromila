@@ -126,6 +126,15 @@
     tip: 'Делай до отказа в конце тренировки — трицепс уже предутомлён и работает на пределе.',
     fig: { env: [], mus: ['triceps', 'chest'], pose: pushPose }
   });
+  add('chestpush', {
+    name: 'Отжимания широким хватом', group: 'Грудь', mus: ['Грудь', 'Передние дельты', 'Трицепс'], w: 0,
+    eq: 'Коврик. Вес тела — без турника и стульев',
+    steps: ['Упор лёжа, ладони заметно ШИРЕ плеч, пальцы чуть наружу, тело прямое от макушки до пяток.', 'Напряги пресс и ягодицы, локти идут в стороны под ~45°.', 'Опускайся медленно за 3 секунды как можно ниже — грудь почти к полу, почувствуй растяжение груди.', 'Пауза 1 секунду внизу и мощно выжмись, сводя грудь в верхней точке.'],
+    mistakes: ['Таз провисает или торчит — держи тело одной линией.', 'Неполная амплитуда — опускайся до конца.', 'Локти прижаты к корпусу — это уже на трицепс, а нам нужна грудь.'],
+    tempo: '3-1-1', breath: 'Вниз — вдох, вверх — выдох.',
+    tip: 'Домашняя замена брусьям: широкий хват и полная глубина бьют по груди. Когда легко на 20 повторов — положи руки на гантели (ход глубже) или ноги на кровать (верх груди).',
+    fig: { env: [], mus: ['chest', 'triceps'], pose: pushPose }
+  });
   const lyingBase = { ...LYING };
   add('floorpress', {
     name: 'Жим гантелей лёжа на полу', group: 'Грудь', mus: ['Грудь', 'Трицепс'], w: 7.5,
@@ -319,7 +328,7 @@
   });
 
   /* ---------------- порядок для библиотеки ---------------- */
-  const ORDER = ['dips', 'pushup', 'closepush', 'floorpress', 'ohpress', 'lateral', 'reardelt', 'skull', 'pullup', 'chinup', 'row1', 'barrow', 'pullover', 'shrug', 'curl', 'hammer', 'zottman', 'conc', 'bulgarian', 'goblet', 'rdl1', 'bridge', 'calf', 'legraise', 'crunch', 'kegel1', 'kegel2', 'kegel3', 'kegel4', 'kegel5'];
+  const ORDER = ['dips', 'pushup', 'chestpush', 'closepush', 'floorpress', 'ohpress', 'lateral', 'reardelt', 'skull', 'pullup', 'chinup', 'row1', 'barrow', 'pullover', 'shrug', 'curl', 'hammer', 'zottman', 'conc', 'bulgarian', 'goblet', 'rdl1', 'bridge', 'calf', 'legraise', 'crunch', 'kegel1', 'kegel2', 'kegel3', 'kegel4', 'kegel5'];
   window.EX = E;
   window.EX_ORDER = ORDER;
   window.EX_GROUPS = ['Все', 'Грудь', 'Спина', 'Плечи', 'Руки', 'Ноги', 'Пресс'];
