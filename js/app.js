@@ -27,7 +27,7 @@
     down: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'
   };
   const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
-  const VER = '25';
+  const VER = '26';
   const st = { tab: App.S.get('tab', 'today'), lib: 'Все', pw: null };
   const TABS = [['today', 'Сегодня'], ['plan', 'Программа'], ['lib', 'Упражнения'], ['music', 'Музыка'], ['stats', 'Прогресс']];
 
@@ -290,10 +290,19 @@
   }
   function gainBlock(body) {
     const RATE = 0.25; // кг/нед — сухой набор
+    const GOAL = 80;   // силуэт Бэйла: рост ~180 см, сухой ~11%, FFMI ~22
     if (!body.length) {
-      return `<div class="card" style="margin:12px 0 0;background:var(--raised)"><div class="eyebrow">Цель · сухой набор</div><p class="sm" style="margin:6px 0 0">Запиши вес — поставлю цель <b style="color:#fff">+0,25 кг в неделю</b> и покажу, на пути ли ты. Взвешивайся раз в неделю утром натощак.</p></div>`;
+      return `<div class="card glow" style="margin:12px 0 0"><div class="eyebrow">🦇 Цель · силуэт Бэйла — ${GOAL} кг</div><p class="sm" style="margin:6px 0 0">Запиши вес — покажу путь к ${GOAL} кг сухой массы и темп <b style="color:#fff">+0,25 кг в неделю</b>. Взвешивайся раз в неделю утром натощак.</p></div>`;
     }
     const first = body[0], lastB = body[body.length - 1];
+    const cur = lastB.kg, remain = Math.max(0, GOAL - cur), base = Math.min(first.kg, cur);
+    const pct = Math.max(0, Math.min(100, (GOAL - base) > 0 ? (cur - base) / (GOAL - base) * 100 : 100));
+    const months = remain > 0 ? Math.round(remain / RATE / 4.345) : 0, reached = remain <= 0.5;
+    const goalCard = `<div class="card glow" style="margin:12px 0 0">
+      <div class="row between"><span class="eyebrow">🦇 Цель · силуэт Бэйла</span><span class="num" style="color:var(--accent)">${GOAL}<span class="sm muted" style="font-family:var(--body)"> кг</span></span></div>
+      <div style="height:8px;border-radius:99px;background:var(--active);overflow:hidden;margin:12px 0 8px"><div style="height:100%;width:${pct}%;background:var(--accent)"></div></div>
+      <div class="row between sm"><span class="muted">${fmt(cur)} кг сейчас</span><span class="b" style="color:var(--accent)">${reached ? 'Цель взята! 🔥' : 'осталось +' + fmt(remain) + ' кг'}</span></div>
+      ${reached ? '' : `<p class="sm muted" style="margin:10px 0 0">~${months} мес ровным темпом +0,25 кг/нед. Приоритет — плечи и ширина спины: именно они дают V-силуэт Бэтмена.</p>`}</div>`;
     const weeks = (App.parse(lastB.d) - App.parse(first.d)) / 6048e5;
     const gained = lastB.kg - first.kg, target = RATE * weeks, expected = first.kg + target;
     let status, cls, tip;
@@ -305,8 +314,8 @@
       else if (diff > 0.5) { status = 'Быстро'; cls = ''; tip = 'Для сухого набора чуть быстро — убавь ~200 ккал, чтобы меньше заливало жиром.'; }
       else { status = 'На пути'; cls = 'green'; tip = 'Темп ровно в цель — так и держи. Белок 110–135 г, сон 8 ч.'; }
     }
-    return `<div class="card" style="margin:12px 0 0;background:var(--raised)">
-      <div class="row between" style="margin-bottom:8px"><span class="eyebrow">Цель · сухой набор +0,25 кг/нед</span><span class="chip ${cls}">${status}</span></div>
+    return goalCard + `<div class="card" style="margin:12px 0 0;background:var(--raised)">
+      <div class="row between" style="margin-bottom:8px"><span class="eyebrow">Недельный темп +0,25 кг/нед</span><span class="chip ${cls}">${status}</span></div>
       <div class="kpi"><div><b>${fmt(first.kg)}</b><span>старт, кг</span></div><div><b>${gained >= 0 ? '+' : ''}${fmt(gained)}</b><span>набрал, кг</span></div><div><b>${weeks >= 1 ? fmt(expected) : '—'}</b><span>цель к дате</span></div></div>
       <p class="sm" style="margin:10px 0 0">${tip}</p></div>`;
   }
