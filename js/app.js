@@ -27,7 +27,7 @@
     down: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'
   };
   const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
-  const VER = '24';
+  const VER = '25';
   const st = { tab: App.S.get('tab', 'today'), lib: 'Все', pw: null };
   const TABS = [['today', 'Сегодня'], ['plan', 'Программа'], ['lib', 'Упражнения'], ['music', 'Музыка'], ['stats', 'Прогресс']];
 
@@ -393,7 +393,7 @@
       } else {
       o.innerHTML = `<div class="body" style="text-align:center"><div style="height:30px"></div><div class="ibtn" style="width:84px;height:84px;margin:0 auto 14px;background:#3fc07a;color:#042019;border:0"><svg class="i" style="width:44px;height:44px;stroke-width:2.6" viewBox="0 0 24 24">${ICON.check}</svg></div><h1 class="h1">Тренировка завершена</h1><p class="muted">День ${W.day} · ${PROG.DAYS[W.day].name}</p>
         <div class="kpi" style="margin:18px 0"><div><b>${sets.length}</b><span>подходов</span></div><div><b>${reps}</b><span>повторов</span></div><div><b>${dur}</b><span>минут</span></div></div>
-        ${ton ? `<div class="card"><div class="eyebrow">Тоннаж</div><div class="num" style="font-size:40px;margin-top:4px">${Math.round(ton)} кг</div></div>` : ''}<p class="sm muted">Теперь белок, вода и сон — мышцы растут в отдыхе.</p></div>
+        ${ton ? `<div class="card"><div class="eyebrow">Тоннаж</div><div class="num" style="font-size:40px;margin-top:4px">${Math.round(ton)} кг</div></div>` : ''}${reviewHTML({ id: W.saved, day: W.day, sets: W.sets })}<p class="sm muted" style="margin-top:14px">Теперь белок, вода и сон — мышцы растут в отдыхе.</p></div>
         <div class="foot"><button class="btn primary lg block" data-a="wdone">Готово</button></div>`;
       }
     }
@@ -419,13 +419,74 @@
     W.pend = { i: ni, s: ns }; W.restLeft = it.rest; W.mode = 'rest'; renderW();
   }
   function finish() { W.mode = 'done'; clearTmr(); stopFig(); if (W.sets.length) save(); renderW(); }
-  function save() { const n = new Date(); App.addSession({ id: n.getTime(), date: App.iso(n), day: W.day, week: W.wk, ph: W.ph, dur: Math.round((Date.now() - W.t0) / 1000), sets: W.sets }); W.saved = true; }
+  function save() { const n = new Date(); const s = { id: n.getTime(), date: App.iso(n), day: W.day, week: W.wk, ph: W.ph, dur: Math.round((Date.now() - W.t0) / 1000), sets: W.sets }; App.addSession(s); W.saved = s.id; }
   /* Записать день «как сделано» из плана — для случая, когда занимался, но не отмечал подходы */
   function logDayDone(dayId) {
     const wk = App.week(), ph = PROG.phaseOfWeek(wk), d = PROG.DAYS[dayId], now = new Date(), sets = [];
     d.list.forEach(x => { const n = x.sets[ph], last = App.last(x.ex), r0 = parseInt(x.reps[ph]) || 10; for (let i = 0; i < n; i++) sets.push({ ex: x.ex, w: last ? last.w : (EX[x.ex].w || 0), r: last ? last.r : r0, n: i + 1 }); });
     App.addSession({ id: now.getTime(), date: App.iso(now), day: dayId, week: wk, ph, dur: d.mins * 60, sets });
   }
+  /* ====== Авто-разбор тренировки (экран «Завершена») ====== */
+  /* Добивные = финишеры: мелкие/изолирующие, которые часто бросают в конце */
+  const FINISHERS = ['skull', 'closepush', 'hammer', 'calf', 'crunch', 'legraise'];
+  function analyze(s) {
+    const day = PROG.DAYS[s.day]; if (!day || !s.sets.length) return null;
+    const cur = {};
+    s.sets.forEach(x => { const a = cur[x.ex] || (cur[x.ex] = { n: 0, bw: 0, br: 0, reps: 0 }); a.n++; a.reps += x.r; if (x.w > a.bw || (x.w === a.bw && x.r > a.br)) { a.bw = x.w; a.br = x.r; } });
+    const prevS = App.log().filter(p => p.day === s.day && p.id !== s.id).sort((a, b) => b.id - a.id)[0];
+    const prev = {};
+    if (prevS) prevS.sets.forEach(x => { const a = prev[x.ex] || (prev[x.ex] = { bw: 0, br: 0 }); if (x.w > a.bw || (x.w === a.bw && x.r > a.br)) { a.bw = x.w; a.br = x.r; } });
+    const rows = day.list.map(it => {
+      const ex = it.ex, c = cur[ex], p = prev[ex], E = EX[ex];
+      let trend = 'new';
+      if (!c) trend = 'skip'; else if (!p) trend = 'new';
+      else if (c.bw > p.bw || (c.bw === p.bw && c.br > p.br)) trend = 'up';
+      else if (c.bw === p.bw && c.br === p.br) trend = 'same'; else trend = 'down';
+      return { ex, name: E ? E.name : ex, c, p, trend, fin: FINISHERS.includes(ex) };
+    });
+    const doneN = rows.filter(r => r.c).length;
+    const finRows = rows.filter(r => r.fin);
+    let cmp = 0, prog = 0;
+    rows.forEach(r => { if (r.c && r.p) { cmp++; if (r.trend === 'up') prog++; } });
+    const doneRatio = rows.length ? doneN / rows.length : 1;
+    let score = cmp ? doneRatio * 7 + (prog / cmp) * 3 : doneRatio * 10;
+    score = Math.max(1, Math.min(10, Math.round(score)));
+    return { rows, doneN, planned: rows.length, finRows, finDone: finRows.filter(r => r.c).length, prog, cmp, score, hasPrev: !!prevS };
+  }
+  function reviewHTML(s) {
+    const a = analyze(s); if (!a) return '';
+    const sColor = a.score >= 8 ? 'var(--green)' : a.score >= 5 ? 'var(--accent)' : 'var(--red)';
+    const verdict = a.score >= 9 ? 'Машина. Так держать 🔥' : a.score >= 7 ? 'Крепко отработал 💪' : a.score >= 5 ? 'Нормально, но добивай до конца' : 'Мало — не бросай упражнения до конца';
+    const rows = a.rows.map(r => {
+      let chip;
+      if (!r.c) chip = '<span class="chip red">пропуск</span>';
+      else {
+        const best = r.c.bw > 0 ? `${fmt(r.c.bw)} кг × ${r.c.br}` : `${r.c.br} повт.`;
+        const cls = r.trend === 'up' ? ' green' : r.trend === 'down' ? ' red' : '';
+        const mark = r.trend === 'up' ? ' ↑' : r.trend === 'down' ? ' ↓' : '';
+        chip = `<span class="chip${cls}">${best}${mark}</span>`;
+      }
+      return `<div class="row between" style="padding:9px 0;border-top:1px solid var(--line);gap:12px"><span class="sm${r.c ? '' : ' muted'}" style="text-align:left">${r.fin ? '🥊 ' : ''}${r.name}</span>${chip}</div>`;
+    }).join('');
+    let fin = '';
+    if (a.finRows.length) {
+      const miss = a.finRows.filter(r => !r.c).map(r => r.name);
+      fin = miss.length
+        ? `<div class="row" style="margin-top:12px;gap:8px"><span class="chip red">Добив пропущен</span><span class="sm muted grow" style="text-align:left">${miss.join(', ')}</span></div>`
+        : '<div class="row" style="margin-top:12px"><span class="chip green">Добивные — все ✓</span></div>';
+    }
+    const progLine = a.hasPrev && a.cmp
+      ? `<div class="sm muted" style="margin-top:10px;text-align:left">📈 Выросли: ${a.prog} из ${a.cmp} упражнений vs прошлый раз</div>`
+      : '<div class="sm muted" style="margin-top:10px;text-align:left">📈 Первый раз этот день — это точка отсчёта</div>';
+    return `<div class="card glow" style="text-align:left;margin-top:16px">
+      <div class="row between"><div class="eyebrow">Разбор тренировки</div><div class="num" style="color:${sColor}">${a.score}<span class="sm muted" style="font-family:var(--body)">/10</span></div></div>
+      <div class="sm" style="color:${sColor};font-weight:700;margin-top:2px">${verdict}</div>
+      <div style="margin-top:10px">${rows}</div>
+      ${fin}${progLine}
+      <div class="sm muted" style="margin-top:10px;text-align:left">Сделано ${a.doneN} из ${a.planned} упражнений дня.</div>
+    </div>`;
+  }
+
   function closeW() { clearTmr(); stopFig(); const o = $('#wov'); if (o) o.remove(); if (wake) { wake.release().catch(() => {}); wake = null; } W = null; render(); }
 
   function sheet(html) { const s = document.createElement('div'); s.className = 'sheet'; s.innerHTML = `<div class="p" role="dialog" aria-modal="true">${html}</div>`; s.addEventListener('click', e => { if (e.target === s) s.remove(); }); layer.appendChild(s); return s; }
