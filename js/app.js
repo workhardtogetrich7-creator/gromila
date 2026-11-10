@@ -27,7 +27,7 @@
     down: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'
   };
   const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
-  const VER = '28';
+  const VER = '29';
   const st = { tab: App.S.get('tab', 'today'), lib: 'Все', pw: null };
   const TABS = [['today', 'Сегодня'], ['plan', 'Программа'], ['lib', 'Упражнения'], ['music', 'Музыка'], ['stats', 'Прогресс']];
 
@@ -130,7 +130,7 @@
   function syncSheet() {
     return `<div class="row between" style="margin-bottom:6px"><h2 style="font-size:24px">Синхронизация</h2><button class="ibtn" data-a="sclose" aria-label="Закрыть">${ic('x')}</button></div>
       <p class="sm muted" style="margin:0 0 12px">Данные будут жить в приватном Gist на твоём GitHub и подтягиваться на все устройства, где введён этот токен. Телефон и карта не нужны.</p>
-      <ol class="sm" style="padding-left:20px;margin:0 0 12px"><li>Жми «Создать токен» — откроется GitHub (при запросе подтверди вход).</li><li>Проверь, что отмечен только <b>gist</b>, внизу — <b>Generate token</b>.</li><li>Скопируй токен (начинается с <b>ghp_</b>) и вставь ниже.</li></ol>
+      <ol class="sm" style="padding-left:20px;margin:0 0 12px"><li>Жми «Создать токен» — откроется GitHub (при запросе подтверди вход).</li><li><b style="color:var(--accent)">Expiration → No expiration</b> (срок действия — бессрочно), иначе токен умрёт через 30 дней и синхронизация слетит.</li><li>Проверь, что отмечен только <b>gist</b>, внизу — <b>Generate token</b>.</li><li>Скопируй токен (начинается с <b>ghp_</b>) и вставь ниже.</li></ol>
       <a class="btn block" href="https://github.com/settings/tokens/new?scopes=gist&description=Gromila%20Sync" target="_blank" rel="noopener" style="margin-bottom:10px">${ic('copy')} Создать токен на GitHub</a>
       <input id="synctok" type="password" placeholder="Вставь токен ghp_…" autocomplete="off" autocapitalize="off" spellcheck="false" style="width:100%;min-height:52px;border-radius:12px;border:1px solid var(--line2);background:var(--surface);color:var(--text);padding:0 14px;font:600 15px var(--body);margin-bottom:10px">
       <button class="btn primary block" data-a="syncconn">Подключить</button>

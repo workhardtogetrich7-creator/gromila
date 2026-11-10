@@ -73,7 +73,7 @@
       setStatus('ok');
       if (window.onSyncApplied) window.onSyncApplied();
     } catch (e) {
-      setStatus('error', e.code === 401 ? 'Токен недействителен' : e.code === 404 ? 'У токена нет доступа «gist»' : 'Нет связи с GitHub');
+      setStatus('error', e.code === 401 ? 'Токен недействителен или истёк — переподключи (создай новый с «No expiration»)' : e.code === 404 ? 'У токена нет доступа «gist»' : 'Нет связи с GitHub');
     } finally { busy = false; }
   }
   function startTimer() { stopTimer(); timer = setInterval(() => { if (document.visibilityState === 'visible') doSync(); }, 15000); }
