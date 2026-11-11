@@ -27,7 +27,7 @@
     down: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'
   };
   const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
-  const VER = '32';
+  const VER = '33';
   const st = { tab: App.S.get('tab', 'today'), lib: 'Все', pw: null };
   const TABS = [['today', 'Сегодня'], ['plan', 'Программа'], ['lib', 'Упражнения'], ['music', 'Музыка'], ['stats', 'Прогресс']];
 
@@ -122,8 +122,11 @@
     } else {
       const txt = s === 'ok' ? `Синхронизировано${when ? ' · ' + when : ''}` : (s === 'sync' || s === 'connecting') ? 'Синхронизирую…' : s === 'offline' ? 'Нет сети — синхронизирую, когда появится' : s === 'error' ? ('Ошибка: ' + (err || 'нет связи')) : 'Подключено';
       const chip = s === 'ok' ? '<span class="chip green">вкл</span>' : s === 'error' ? '<span class="chip red">!</span>' : '<span class="chip">…</span>';
+      const topBtn = s === 'error'
+        ? `<button class="btn primary block" data-a="pastelink" style="margin-bottom:8px">${ic('copy')} Вставить ссылку с другого устройства</button>`
+        : `<button class="btn primary block" data-a="syncpair" style="margin-bottom:8px">${ic('copy')} Связать другое устройство</button>`;
       body = `<div class="row between" style="margin:6px 0 12px"><div class="grow"><div class="b">${s === 'error' ? 'Нужно внимание' : 'Включена'}</div><div class="sm muted">${txt}</div></div>${chip}</div>
-        <button class="btn primary block" data-a="syncpair" style="margin-bottom:8px">${ic('copy')} Связать другое устройство</button>
+        ${topBtn}
         <div class="row" style="gap:10px"><button class="btn grow" data-a="syncnow">Синхронизировать сейчас</button><button class="btn ghost" data-a="syncoff">Отключить</button></div>`;
     }
     return `<div class="card"><div class="eyebrow">Синхронизация устройств</div>${body}</div>`;
