@@ -27,7 +27,7 @@
     down: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'
   };
   const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
-  const VER = '31';
+  const VER = '32';
   const st = { tab: App.S.get('tab', 'today'), lib: 'Все', pw: null };
   const TABS = [['today', 'Сегодня'], ['plan', 'Программа'], ['lib', 'Упражнения'], ['music', 'Музыка'], ['stats', 'Прогресс']];
 
@@ -118,7 +118,7 @@
     const when = Sync.at() ? new Date(Sync.at()).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '';
     let body;
     if (!on) {
-      body = `<p class="sm muted" style="margin:6px 0 12px">Включи — и прогресс будет сам появляться на всех твоих устройствах через твой GitHub. Обновление раз в несколько секунд, без телефона и карты.</p><button class="btn primary block" data-a="syncopen">Подключить синхронизацию</button>`;
+      body = `<p class="sm muted" style="margin:6px 0 12px">Включи — и прогресс будет сам появляться на всех твоих устройствах. Обновление раз в несколько секунд, без карты и логинов.</p><button class="btn primary block" data-a="syncopen">Подключить с нуля</button><button class="btn block" data-a="pastelink" style="margin-top:8px">${ic('copy')} Вставить ссылку с другого устройства</button>`;
     } else {
       const txt = s === 'ok' ? `Синхронизировано${when ? ' · ' + when : ''}` : (s === 'sync' || s === 'connecting') ? 'Синхронизирую…' : s === 'offline' ? 'Нет сети — синхронизирую, когда появится' : s === 'error' ? ('Ошибка: ' + (err || 'нет связи')) : 'Подключено';
       const chip = s === 'ok' ? '<span class="chip green">вкл</span>' : s === 'error' ? '<span class="chip red">!</span>' : '<span class="chip">…</span>';
@@ -144,6 +144,13 @@
       <input id="pairlink" readonly value="${link}" onclick="this.select()" style="width:100%;min-height:52px;border-radius:12px;border:1px solid var(--line2);background:var(--surface);color:var(--text);padding:0 14px;font:600 13px var(--body);margin:8px 0 10px">
       <button class="btn primary block" data-a="copylink">${ic('copy')} Скопировать ссылку</button>
       <p class="xs muted" style="margin:10px 0 0">⚠️ Ссылка содержит твой ключ доступа — открывай только на СВОИХ устройствах и никому не пересылай.</p>`;
+  }
+  function linkSheet() {
+    return `<div class="row between" style="margin-bottom:6px"><h2 style="font-size:24px">Связать по ссылке</h2><button class="ibtn" data-a="sclose" aria-label="Закрыть">${ic('x')}</button></div>
+      <p class="sm muted" style="margin:0 0 12px">Вставь сюда ссылку, которую скопировал на другом устройстве (кнопка «Связать другое устройство»). Это приложение подключится к твоей синхронизации — прямо здесь, без Safari.</p>
+      <input id="pastein" placeholder="Вставь ссылку…" autocomplete="off" autocapitalize="off" spellcheck="false" style="width:100%;min-height:52px;border-radius:12px;border:1px solid var(--line2);background:var(--surface);color:var(--text);padding:0 14px;font:600 14px var(--body);margin-bottom:10px">
+      <button class="btn primary block" data-a="linkconn">Связать</button>
+      <p class="xs muted" style="margin:10px 0 0">Ссылку получишь на другом устройстве: Прогресс → Синхронизация → «Связать другое устройство».</p>`;
   }
 
   /* ============ СЕГОДНЯ ============ */
@@ -564,6 +571,8 @@
     syncconn: async t => { const el = $('#synctok'), tok = el ? el.value : ''; if (!tok.trim()) { toast('Вставь токен'); return; } t.disabled = true; t.textContent = 'Подключаю…'; const r = await Sync.connect(tok); if (r.ok) { const sh = document.querySelector('.sheet'); if (sh) sh.remove(); render(); toast(r.warn ? 'Подключено, но: ' + r.warn : 'Синхронизация включена'); } else { t.disabled = false; t.textContent = 'Подключить'; toast(r.error || 'Не удалось подключить'); } },
     syncnow: async () => { toast('Синхронизирую…'); await Sync.sync(); render(); },
     syncpair: () => { const link = Sync.pairLink ? Sync.pairLink() : ''; if (!link) { toast('Сначала включи синхронизацию'); return; } sheet(pairSheet(link)); },
+    pastelink: () => sheet(linkSheet()),
+    linkconn: async t => { const el = $('#pastein'), v = el ? el.value.trim() : ''; const m = v.match(/[#&]pair=([^&\s]+)/); const code = m ? m[1] : v; if (!code) { toast('Вставь ссылку'); return; } t.disabled = true; t.textContent = 'Связываю…'; const r = await Sync.importPair(code); if (r && r.ok) { const sh = document.querySelector('.sheet'); if (sh) sh.remove(); render(); toast(r.warn ? 'Связано, но: ' + r.warn : 'Устройства связаны'); } else { t.disabled = false; t.textContent = 'Связать'; toast((r && r.error) || 'Ссылка не подошла'); } },
     copylink: async () => { const el = $('#pairlink'), link = el ? el.value : ''; if (!link) return; try { await navigator.clipboard.writeText(link); toast('Ссылка скопирована — открой её на другом устройстве'); } catch (e) { if (el) { el.focus(); el.select(); try { document.execCommand('copy'); toast('Ссылка скопирована'); } catch (_) { toast('Выдели ссылку и скопируй вручную'); } } } },
     syncoff: () => { if (confirm('Отключить синхронизацию на этом устройстве? Данные останутся в приложении.')) { Sync.disconnect(); render(); toast('Синхронизация отключена'); } },
     hist: t => { const id = +t.dataset.id, s = App.log().find(x => x.id === id); if (s) sheet(histSheet(s)); },
