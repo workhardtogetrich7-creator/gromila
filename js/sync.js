@@ -103,10 +103,24 @@
     },
     disconnect() { token = ''; gistId = ''; S.set(KEY, ''); S.set(GKEY, ''); stopTimer(); setStatus('off'); },
     sync() { return doSync(); },
+    /* Ссылка-связка: несёт токен + id гиста. Открыл на другом устройстве — оно подключилось. */
+    pairLink() { if (!token) return ''; return location.origin + location.pathname + '#pair=' + btoa(encodeURIComponent(token + '|' + (gistId || ''))); },
+    async importPair(code) {
+      try {
+        const parts = decodeURIComponent(atob(code)).split('|');
+        if (!parts[0]) return { ok: false, error: 'Ссылка повреждена' };
+        token = parts[0]; gistId = parts[1] || ''; S.set(KEY, token); if (gistId) S.set(GKEY, gistId);
+        setStatus('connecting'); await doSync(); startTimer();
+        return status === 'error' ? { ok: true, warn: lastError } : { ok: true };
+      } catch (e) { return { ok: false, error: 'Ссылка повреждена' }; }
+    },
     kick() { if (!token) return; clearTimeout(kickT); kickT = setTimeout(doSync, 1500); }
   };
   window.Sync = Sync;
-  if (token) { startTimer(); setTimeout(doSync, 800); }
+  /* Авто-импорт из ссылки-связки (#pair=...): подключаемся и сразу чистим адрес, чтобы ключ не висел в URL */
+  const ph = (location.hash || '').match(/[#&]pair=([^&]+)/);
+  if (ph) { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* no-op */ } Sync.importPair(ph[1]).then(() => { if (window.onSyncApplied) window.onSyncApplied(); }); }
+  else if (token) { startTimer(); setTimeout(doSync, 800); }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && token) doSync(); });
   window.addEventListener('online', () => { if (token) doSync(); });
 })();
