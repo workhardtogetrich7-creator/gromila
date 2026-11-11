@@ -279,6 +279,28 @@
     fig: { env: [], mus: ['abs'], trail: 'head', pose: p => ({ hip: [190, 247], foot: [236, F], torso: M(-90, -128, p), handHead: true, ed: 1, farArm: 'none' }) }
   });
 
+  /* ---------------- ШЕЯ (упряжь + гантель) ---------------- */
+  add('neckext', {
+    name: 'Разгибание шеи с упряжью', group: 'Шея', mus: ['Задняя часть шеи', 'Трапеции'], w: 5,
+    eq: 'Упряжь для шеи + гантель на карабин (начни с 2–4 кг)',
+    one: 'Повесь свою гантель (до 9 кг) прямо на карабин упряжи за гриф — хватит надолго. Но начни ЛЕГКО, 2–4 кг.',
+    steps: ['Сядь, наклонись вперёд, упряжь на голове, вес свободно висит вниз.', 'Медленно подними голову вверх (разгибание), подбородок от груди.', 'В верхней точке — пауза 1 секунда, напряги заднюю часть шеи.', 'Плавно опусти подбородок к груди. Без рывков!'],
+    mistakes: ['Рывки головой вместо плавного движения.', 'Слишком большой вес сразу — травма шеи.', 'Короткая амплитуда.'],
+    tempo: '2-1-2', breath: 'Вверх — выдох, вниз — вдох.',
+    tip: 'Шея хрупкая: начинай ЛЕГКО (2–4 кг), плавно, 2–3 раза в неделю. Боль, хруст или кружение — СТОП.',
+    fig: { env: [{ t: 'chair', x: 104, y: 206, w: 60 }], mus: ['traps'], pose: p => ({ foot: [196, F], hip: [138, 198], torso: 126, head: M(106, 168, p), uarm: 8, farm: 20, db: 'none', farArm: 'none' }) }
+  });
+  add('neckflex', {
+    name: 'Сгибание шеи лёжа', group: 'Шея', mus: ['Передняя часть шеи'], w: 2.5,
+    eq: 'Лёжа на краю кровати/лавки; можно блин на лоб или без веса',
+    one: 'Можно вообще без веса или держать лёгкий блин на лбу руками — для баланса к разгибанию.',
+    steps: ['Ляг на спину так, чтобы голова свисала с края кровати/лавки.', 'Плавно подтяни подбородок к груди, поднимая голову.', 'Наверху — пауза 1 секунда.', 'Медленно опусти голову назад (не роняй рывком!).'],
+    mistakes: ['Роняешь голову вниз рывком — опасно для шеи.', 'Поднимаешь плечи вместо работы шеи.', 'Слишком быстро.'],
+    tempo: '2-1-2', breath: 'Вверх — выдох, вниз — вдох.',
+    tip: 'Баланс к разгибанию: качай и перёд шеи, иначе будет перекос и осанка поедет. Только плавно.',
+    fig: { env: [], mus: [], pose: p => ({ hip: [190, 247], foot: [236, F], torso: -90, head: M(-90, -128, p), ed: 1, farArm: 'none' }) }
+  });
+
   /* 5 упражнений Кегеля (по рилсу ivan_krasavin_): всё лёжа, для тазового дна */
   const bridgePose = (lo, hi) => p => { const f = M(lo, hi, p) * R; const hip = [110 + 66 * Math.cos(f), 246 - 66 * Math.sin(f)]; return { hip, torso: Math.atan2(-Math.cos(f), Math.sin(f)) / R, foot: [208, F], hand: [hip[0] - 4, hip[1] - 12], ed: 1, farArm: 'none' }; };
   add('kegel1', {
@@ -328,7 +350,7 @@
   });
 
   /* ---------------- порядок для библиотеки ---------------- */
-  const ORDER = ['dips', 'pushup', 'chestpush', 'closepush', 'floorpress', 'ohpress', 'lateral', 'reardelt', 'skull', 'pullup', 'chinup', 'row1', 'barrow', 'pullover', 'shrug', 'curl', 'hammer', 'zottman', 'conc', 'bulgarian', 'goblet', 'rdl1', 'bridge', 'calf', 'legraise', 'crunch', 'kegel1', 'kegel2', 'kegel3', 'kegel4', 'kegel5'];
+  const ORDER = ['dips', 'pushup', 'chestpush', 'closepush', 'floorpress', 'ohpress', 'lateral', 'reardelt', 'skull', 'pullup', 'chinup', 'row1', 'barrow', 'pullover', 'shrug', 'curl', 'hammer', 'zottman', 'conc', 'bulgarian', 'goblet', 'rdl1', 'bridge', 'calf', 'legraise', 'crunch', 'neckext', 'neckflex', 'kegel1', 'kegel2', 'kegel3', 'kegel4', 'kegel5'];
   window.EX = E;
   window.EX_ORDER = ORDER;
   window.EX_GROUPS = ['Все', 'Грудь', 'Спина', 'Плечи', 'Руки', 'Ноги', 'Пресс'];
